@@ -201,6 +201,19 @@ namespace backend {
             auto it = mostRecentTextureUsages.find(texture);
             return it != mostRecentTextureUsages.end() && (it->second & usage);
         };
+        auto isTextureTransitionPossible = [&](TextureBase* texture, nxt::TextureUsageBit usage) -> bool {
+            const nxt::TextureUsageBit attachmentUsages =
+                nxt::TextureUsageBit::ColorAttachment |
+                nxt::TextureUsageBit::DepthStencilAttachment;
+            ASSERT(usage != nxt::TextureUsageBit::None && nxt::HasZeroOrOneBits(usage));
+            auto it = mostRecentTextureUsages.find(texture);
+            if (it != mostRecentTextureUsages.end()) {
+                if (it->second & attachmentUsages) {
+                    return false;
+                }
+            }
+            return texture->IsTransitionPossible(usage);
+        };
 
         auto validateBindGroupUsages = [&](BindGroupBase* group) -> bool {
             const auto& layoutInfo = group->GetLayout()->GetBindingInfo();
@@ -260,7 +273,11 @@ namespace backend {
         uint32_t currentSubpass = 0;
         auto beginSubpass = [&]() -> bool {
             auto& subpassInfo = currentRenderPass->GetSubpassInfo(currentSubpass);
-            for (auto attachmentSlot : subpassInfo.colorAttachments) {
+            for (size_t location = 0; location < subpassInfo.colorAttachments.size(); ++location) {
+                if (!subpassInfo.colorAttachmentsSet[location]) {
+                    continue;
+                }
+                auto attachmentSlot = subpassInfo.colorAttachments[location];
                 auto* tv = currentFramebuffer->GetTextureView(attachmentSlot);
                 // TODO(kainino@chromium.org): the TextureView can only be null
                 // because of the null=backbuffer hack (null representing the
@@ -278,10 +295,33 @@ namespace backend {
                     HandleError("Can't transition attachment to ColorAttachment usage");
                     return false;
                 }
-                mostRecentTextureUsages.erase(texture);
+                mostRecentTextureUsages[texture] = nxt::TextureUsageBit::ColorAttachment;
                 texturesTransitioned.insert(texture);
             }
             return true;
+        };
+        auto endSubpass = [&]() {
+            auto& subpassInfo = currentRenderPass->GetSubpassInfo(currentSubpass);
+            for (size_t location = 0; location < subpassInfo.colorAttachments.size(); ++location) {
+                if (!subpassInfo.colorAttachmentsSet[location]) {
+                    continue;
+                }
+                auto attachmentSlot = subpassInfo.colorAttachments[location];
+                auto* tv = currentFramebuffer->GetTextureView(attachmentSlot);
+                // TODO(kainino@chromium.org): the TextureView can only be null
+                // because of the null=backbuffer hack (null representing the
+                // backbuffer). Once that hack is removed (once we have WSI)
+                // this check isn't needed.
+                if (tv == nullptr) {
+                    continue;
+                }
+
+                auto* texture = tv->GetTexture();
+                if (texture->IsFrozen()) {
+                    continue;
+                }
+                mostRecentTextureUsages[texture] = nxt::TextureUsageBit::None;
+            }
         };
 
         Command type;
@@ -298,6 +338,8 @@ namespace backend {
                             HandleError("Can't advance beyond the last subpass");
                             return false;
                         }
+
+                        endSubpass();
                         currentSubpass += 1;
                         if (!beginSubpass()) {
                             return false;
@@ -465,6 +507,7 @@ namespace backend {
                             HandleError("Can't end a render pass before the last subpass");
                             return false;
                         }
+                        endSubpass();
                         currentRenderPass = nullptr;
                         currentFramebuffer = nullptr;
                         aspects.reset(VALIDATION_ASPECT_RENDER_PASS);
@@ -578,8 +621,14 @@ namespace backend {
                         auto buffer = cmd->buffer.Get();
                         auto usage = cmd->usage;
 
-                        if (!cmd->buffer->IsTransitionPossible(cmd->usage)) {
-                            HandleError("Buffer frozen or usage not allowed");
+                        if (!buffer->IsTransitionPossible(usage)) {
+                            if (buffer->IsFrozen()) {
+                                HandleError("Buffer transition not possible (usage is frozen)");
+                            } else if (!BufferBase::IsUsagePossible(buffer->GetAllowedUsage(), usage)) {
+                                HandleError("Buffer transition not possible (usage not allowed)");
+                            } else {
+                                HandleError("Buffer transition not possible");
+                            }
                             return false;
                         }
 
@@ -595,32 +644,15 @@ namespace backend {
                         auto texture = cmd->texture.Get();
                         auto usage = cmd->usage;
 
-                        if (!cmd->texture->IsTransitionPossible(cmd->usage)) {
-                            HandleError("Texture frozen or usage not allowed");
-                            return false;
-                        }
-
-                        // TODO(kainino@chromium.org): We should be able to
-                        // optimize this by tracking which textures are in use
-                        // as attachments. Maybe it's possible that the
-                        // XAttachment usages could mark this: disallow
-                        // explicit transitions to XAttachment usages, and
-                        // disallow explicit transitions of resources already
-                        // in an XAttachment usage.
-                        if (currentRenderPass) {
-                            auto& info = currentRenderPass->GetSubpassInfo(currentSubpass);
-                            for (uint32_t location = 0; location < info.colorAttachments.size(); ++location) {
-                                if (!info.colorAttachmentsSet[location]) {
-                                    continue;
-                                }
-                                uint32_t attachmentSlot = info.colorAttachments[location];
-                                auto* tv = currentFramebuffer->GetTextureView(attachmentSlot);
-                                // TODO(kainino@chromium.org): remove check for tv being non-null once the null=backbuffer hack is removed.
-                                if (tv && tv->GetTexture() == texture) {
-                                    HandleError("Can't transition a texture while it's used as a color attachment");
-                                    return false;
-                                }
+                        if (!isTextureTransitionPossible(texture, usage)) {
+                            if (texture->IsFrozen()) {
+                                HandleError("Texture transition not possible (usage is frozen)");
+                            } else if (!TextureBase::IsUsagePossible(texture->GetAllowedUsage(), usage)) {
+                                HandleError("Texture transition not possible (usage not allowed)");
+                            } else {
+                                HandleError("Texture transition not possible");
                             }
+                            return false;
                         }
 
                         mostRecentTextureUsages[texture] = usage;
