@@ -28,9 +28,9 @@ namespace backend {
     // TextureBase
 
     TextureBase::TextureBase(TextureBuilder* builder)
-        : device(builder->device), dimension(builder->dimension), format(builder->format), width(builder->width),
-        height(builder->height), depth(builder->depth), numMipLevels(builder->numMipLevels),
-        allowedUsage(builder->allowedUsage), currentUsage(builder->currentUsage) {
+        : UsageTracker(builder->allowedUsage, builder->currentUsage),
+        device(builder->device), dimension(builder->dimension), format(builder->format), width(builder->width),
+        height(builder->height), depth(builder->depth), numMipLevels(builder->numMipLevels) {
     }
 
     DeviceBase* TextureBase::GetDevice() {
@@ -55,41 +55,15 @@ namespace backend {
     uint32_t TextureBase::GetNumMipLevels() const {
         return numMipLevels;
     }
-    nxt::TextureUsageBit TextureBase::GetAllowedUsage() const {
-        return allowedUsage;
-    }
-    nxt::TextureUsageBit TextureBase::GetUsage() const {
-        return currentUsage;
-    }
 
     TextureViewBuilder* TextureBase::CreateTextureViewBuilder() {
         return new TextureViewBuilder(device, this);
-    }
-
-    bool TextureBase::IsFrozen() const {
-        return frozen;
-    }
-
-    bool TextureBase::HasFrozenUsage(nxt::TextureUsageBit usage) const {
-        return frozen && (usage & allowedUsage);
     }
 
     bool TextureBase::IsUsagePossible(nxt::TextureUsageBit allowedUsage, nxt::TextureUsageBit usage) {
         bool allowed = (usage & allowedUsage) == usage;
         bool singleUse = nxt::HasZeroOrOneBits(usage);
         return allowed && singleUse;
-    }
-
-    bool TextureBase::IsTransitionPossible(nxt::TextureUsageBit usage) const {
-        if (frozen) {
-            return false;
-        }
-        return IsUsagePossible(allowedUsage, usage);
-    }
-
-    void TextureBase::TransitionUsageImpl(nxt::TextureUsageBit usage) {
-        assert(IsTransitionPossible(usage));
-        currentUsage = usage;
     }
 
     void TextureBase::TransitionUsage(nxt::TextureUsageBit usage) {
@@ -101,13 +75,9 @@ namespace backend {
     }
 
     void TextureBase::FreezeUsage(nxt::TextureUsageBit usage) {
-        if (!IsTransitionPossible(usage)) {
-            device->HandleError("Texture frozen or usage not allowed");
-            return;
+        if (!FreezeUsageImpl(usage)) {
+            device->HandleError("Texture already frozen or usage not allowed");
         }
-        allowedUsage = usage;
-        currentUsage = usage;
-        frozen = true;
     }
 
     // TextureBuilder

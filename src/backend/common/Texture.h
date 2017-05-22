@@ -18,6 +18,7 @@
 #include "Forward.h"
 #include "Builder.h"
 #include "RefCounted.h"
+#include "UsageTracker.h"
 
 #include "nxt/nxtcpp.h"
 
@@ -25,7 +26,7 @@ namespace backend {
 
     size_t TextureFormatPixelSize(nxt::TextureFormat format);
 
-    class TextureBase : public RefCounted {
+    class TextureBase : public RefCounted, public UsageTracker<TextureBase, nxt::TextureUsageBit> {
         public:
             TextureBase(TextureBuilder* builder);
 
@@ -35,13 +36,7 @@ namespace backend {
             uint32_t GetHeight() const;
             uint32_t GetDepth() const;
             uint32_t GetNumMipLevels() const;
-            nxt::TextureUsageBit GetAllowedUsage() const;
-            nxt::TextureUsageBit GetUsage() const;
-            bool IsFrozen() const;
-            bool HasFrozenUsage(nxt::TextureUsageBit usage) const;
             static bool IsUsagePossible(nxt::TextureUsageBit allowedUsage, nxt::TextureUsageBit usage);
-            bool IsTransitionPossible(nxt::TextureUsageBit usage) const;
-            void TransitionUsageImpl(nxt::TextureUsageBit usage);
 
             DeviceBase* GetDevice();
 
@@ -57,9 +52,6 @@ namespace backend {
             nxt::TextureFormat format;
             uint32_t width, height, depth;
             uint32_t numMipLevels;
-            nxt::TextureUsageBit allowedUsage = nxt::TextureUsageBit::None;
-            nxt::TextureUsageBit currentUsage = nxt::TextureUsageBit::None;
-            bool frozen = false;
     };
 
     class TextureBuilder : public Builder<TextureBase> {
