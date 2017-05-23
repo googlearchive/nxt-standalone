@@ -206,6 +206,9 @@ namespace backend {
                 nxt::TextureUsageBit::ColorAttachment |
                 nxt::TextureUsageBit::DepthStencilAttachment;
             ASSERT(usage != nxt::TextureUsageBit::None && nxt::HasZeroOrOneBits(usage));
+            if (usage & attachmentUsages) {
+                return false;
+            }
             auto it = mostRecentTextureUsages.find(texture);
             if (it != mostRecentTextureUsages.end()) {
                 if (it->second & attachmentUsages) {
@@ -273,10 +276,7 @@ namespace backend {
         uint32_t currentSubpass = 0;
         auto beginSubpass = [&]() -> bool {
             auto& subpassInfo = currentRenderPass->GetSubpassInfo(currentSubpass);
-            for (size_t location = 0; location < subpassInfo.colorAttachments.size(); ++location) {
-                if (!subpassInfo.colorAttachmentsSet[location]) {
-                    continue;
-                }
+            for (auto location : IterateBitSet(subpassInfo.colorAttachmentsSet)) {
                 auto attachmentSlot = subpassInfo.colorAttachments[location];
                 auto* tv = currentFramebuffer->GetTextureView(attachmentSlot);
                 // TODO(kainino@chromium.org): the TextureView can only be null
@@ -302,10 +302,7 @@ namespace backend {
         };
         auto endSubpass = [&]() {
             auto& subpassInfo = currentRenderPass->GetSubpassInfo(currentSubpass);
-            for (size_t location = 0; location < subpassInfo.colorAttachments.size(); ++location) {
-                if (!subpassInfo.colorAttachmentsSet[location]) {
-                    continue;
-                }
+            for (auto location : IterateBitSet(subpassInfo.colorAttachmentsSet)) {
                 auto attachmentSlot = subpassInfo.colorAttachments[location];
                 auto* tv = currentFramebuffer->GetTextureView(attachmentSlot);
                 // TODO(kainino@chromium.org): the TextureView can only be null
