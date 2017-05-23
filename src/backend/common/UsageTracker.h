@@ -54,14 +54,6 @@ class UsageTracker {
             currentUsage = usage;
         }
 
-        bool ClearUsage() {
-            if (IsFrozen()) {
-                return false;
-            }
-            currentUsage = nxt::TextureUsageBit::None;
-            return true;
-        }
-
         bool FreezeUsageImpl(B usage) {
             if (!IsTransitionPossible(usage)) {
                 return false;
