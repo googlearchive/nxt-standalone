@@ -18,23 +18,18 @@
 #include "Forward.h"
 #include "Builder.h"
 #include "RefCounted.h"
+#include "UsageTracker.h"
 
 #include "nxt/nxtcpp.h"
 
 namespace backend {
 
-    class BufferBase : public RefCounted {
+    class BufferBase : public RefCounted, public UsageTracker<BufferBase, nxt::BufferUsageBit> {
         public:
             BufferBase(BufferBuilder* builder);
 
             uint32_t GetSize() const;
-            nxt::BufferUsageBit GetAllowedUsage() const;
-            nxt::BufferUsageBit GetUsage() const;
             static bool IsUsagePossible(nxt::BufferUsageBit allowedUsage, nxt::BufferUsageBit usage);
-            bool IsTransitionPossible(nxt::BufferUsageBit usage) const;
-            bool IsFrozen() const;
-            bool HasFrozenUsage(nxt::BufferUsageBit usage) const;
-            void TransitionUsageImpl(nxt::BufferUsageBit usage);
 
             DeviceBase* GetDevice();
 
@@ -49,9 +44,6 @@ namespace backend {
 
             DeviceBase* device;
             uint32_t size;
-            nxt::BufferUsageBit allowedUsage = nxt::BufferUsageBit::None;
-            nxt::BufferUsageBit currentUsage = nxt::BufferUsageBit::None;
-            bool frozen = false;
     };
 
     class BufferBuilder : public Builder<BufferBase> {

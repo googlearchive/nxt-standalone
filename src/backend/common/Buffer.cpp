@@ -24,10 +24,8 @@ namespace backend {
     // Buffer
 
     BufferBase::BufferBase(BufferBuilder* builder)
-        : device(builder->device),
-          size(builder->size),
-          allowedUsage(builder->allowedUsage),
-          currentUsage(builder->currentUsage) {
+        : UsageTracker(builder->allowedUsage, builder->currentUsage),
+          device(builder->device), size(builder->size) {
     }
 
     BufferViewBuilder* BufferBase::CreateBufferViewBuilder() {
@@ -42,34 +40,18 @@ namespace backend {
         return size;
     }
 
-    nxt::BufferUsageBit BufferBase::GetAllowedUsage() const {
-        return allowedUsage;
-    }
-
-    nxt::BufferUsageBit BufferBase::GetUsage() const {
-        return currentUsage;
-    }
-
     void BufferBase::SetSubData(uint32_t start, uint32_t count, const uint32_t* data) {
         if ((start + count) * sizeof(uint32_t) > GetSize()) {
             device->HandleError("Buffer subdata out of range");
             return;
         }
 
-        if (!(currentUsage & nxt::BufferUsageBit::Mapped)) {
+        if (!HasUsage(nxt::BufferUsageBit::Mapped)) {
             device->HandleError("Buffer needs the mapped usage bit");
             return;
         }
 
         SetSubDataImpl(start, count, data);
-    }
-
-    bool BufferBase::IsFrozen() const {
-        return frozen;
-    }
-
-    bool BufferBase::HasFrozenUsage(nxt::BufferUsageBit usage) const {
-        return frozen && (usage & allowedUsage);
     }
 
     bool BufferBase::IsUsagePossible(nxt::BufferUsageBit allowedUsage, nxt::BufferUsageBit usage) {
@@ -84,18 +66,6 @@ namespace backend {
         return allowed && (readOnly || singleUse);
     }
 
-    bool BufferBase::IsTransitionPossible(nxt::BufferUsageBit usage) const {
-        if (frozen) {
-            return false;
-        }
-        return IsUsagePossible(allowedUsage, usage);
-    }
-
-    void BufferBase::TransitionUsageImpl(nxt::BufferUsageBit usage) {
-        assert(IsTransitionPossible(usage));
-        currentUsage = usage;
-    }
-
     void BufferBase::TransitionUsage(nxt::BufferUsageBit usage) {
         if (!IsTransitionPossible(usage)) {
             device->HandleError("Buffer frozen or usage not allowed");
@@ -105,13 +75,9 @@ namespace backend {
     }
 
     void BufferBase::FreezeUsage(nxt::BufferUsageBit usage) {
-        if (!IsTransitionPossible(usage)) {
-            device->HandleError("Buffer frozen or usage not allowed");
-            return;
+        if (!FreezeUsageImpl(usage)) {
+            device->HandleError("Buffer already frozen or usage not allowed");
         }
-        allowedUsage = usage;
-        currentUsage = usage;
-        frozen = true;
     }
 
     // BufferBuilder

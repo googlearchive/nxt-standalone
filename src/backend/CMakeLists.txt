@@ -63,6 +63,7 @@ list(APPEND BACKEND_SOURCES
     ${COMMON_DIR}/Texture.cpp
     ${COMMON_DIR}/Texture.h
     ${COMMON_DIR}/ToBackend.h
+    ${COMMON_DIR}/UsageTracker.h
 )
 
 # OpenGL Backend
