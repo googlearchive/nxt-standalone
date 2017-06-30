@@ -148,15 +148,11 @@ namespace backend {
             }
 
             auto* texture = tv->GetTexture();
-            if (texture->HasFrozenUsage(nxt::TextureUsageBit::ColorAttachment)) {
-                continue;
-            }
-            if (!texture->IsTransitionPossible(nxt::TextureUsageBit::ColorAttachment)) {
-                builder->HandleError("Can't transition attachment to ColorAttachment usage");
+            if (!EnsureTextureUsage(texture, nxt::TextureUsageBit::ColorAttachment)) {
+                builder->HandleError("Unable to ensure texture has ColorAttachment usage");
                 return false;
             }
-            mostRecentTextureUsages[texture] = nxt::TextureUsageBit::ColorAttachment;
-            texturesTransitioned.insert(texture);
+            texturesAttached.insert(texture);
         }
 
         aspects.set(VALIDATION_ASPECT_RENDER_SUBPASS);
@@ -186,9 +182,9 @@ namespace backend {
             if (texture->IsFrozen()) {
                 continue;
             }
-
-            mostRecentTextureUsages[texture] = nxt::TextureUsageBit::None;
         }
+        // Everything in texturesAttached should be for the current render subpass.
+        texturesAttached.clear();
 
         currentSubpass += 1;
         aspects.reset(VALIDATION_ASPECT_RENDER_SUBPASS);
@@ -274,6 +270,10 @@ namespace backend {
     }
 
     bool CommandBufferStateTracker::SetBindGroup(uint32_t index, BindGroupBase* bindgroup) {
+        if (!HavePipeline()) {
+            builder->HandleError("Can't set the bind group without a pipeline");
+            return false;
+        }
         if (bindgroup->GetLayout() != lastPipeline->GetLayout()->GetBindGroupLayout(index)) {
             builder->HandleError("Bind group layout mismatch");
             return false;
@@ -336,11 +336,13 @@ namespace backend {
     }
 
     bool CommandBufferStateTracker::TransitionTextureUsage(TextureBase* texture, nxt::TextureUsageBit usage) {
-        if (!IsTextureTransitionPossible(texture, usage)) {
+        if (!IsExplicitTextureTransitionPossible(texture, usage)) {
             if (texture->IsFrozen()) {
                 builder->HandleError("Texture transition not possible (usage is frozen)");
             } else if (!TextureBase::IsUsagePossible(texture->GetAllowedUsage(), usage)) {
                 builder->HandleError("Texture transition not possible (usage not allowed)");
+            } else if (texturesAttached.find(texture) != texturesAttached.end()) {
+                builder->HandleError("Texture transition not possible (texture is in use as a framebuffer attachment)");
             } else {
                 builder->HandleError("Texture transition not possible");
             }
@@ -348,6 +350,18 @@ namespace backend {
         }
 
         mostRecentTextureUsages[texture] = usage;
+        texturesTransitioned.insert(texture);
+        return true;
+    }
+
+    bool CommandBufferStateTracker::EnsureTextureUsage(TextureBase* texture, nxt::TextureUsageBit usage) {
+        if (texture->HasFrozenUsage(nxt::TextureUsageBit::ColorAttachment)) {
+            return true;
+        }
+        if (!IsInternalTextureTransitionPossible(texture, nxt::TextureUsageBit::ColorAttachment)) {
+            return false;
+        }
+        mostRecentTextureUsages[texture] = nxt::TextureUsageBit::ColorAttachment;
         texturesTransitioned.insert(texture);
         return true;
     }
@@ -370,22 +384,23 @@ namespace backend {
         return it != mostRecentTextureUsages.end() && (it->second & usage);
     };
 
-    bool CommandBufferStateTracker::IsTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const {
-        const nxt::TextureUsageBit attachmentUsages =
-            nxt::TextureUsageBit::ColorAttachment |
-            nxt::TextureUsageBit::DepthStencilAttachment;
+    bool CommandBufferStateTracker::IsInternalTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const {
         ASSERT(usage != nxt::TextureUsageBit::None && nxt::HasZeroOrOneBits(usage));
-        if (usage & attachmentUsages) {
+        if (texturesAttached.find(texture) != texturesAttached.end()) {
             return false;
-        }
-        auto it = mostRecentTextureUsages.find(texture);
-        if (it != mostRecentTextureUsages.end()) {
-            if (it->second & attachmentUsages) {
-                return false;
-            }
         }
         return texture->IsTransitionPossible(usage);
     };
+
+    bool CommandBufferStateTracker::IsExplicitTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const {
+        const nxt::TextureUsageBit attachmentUsages =
+            nxt::TextureUsageBit::ColorAttachment |
+            nxt::TextureUsageBit::DepthStencilAttachment;
+        if (usage & attachmentUsages) {
+            return false;
+        }
+        return IsInternalTextureTransitionPossible(texture, usage);
+    }
 
     bool CommandBufferStateTracker::RecomputeHaveAspectBindGroups() {
         if (aspects[VALIDATION_ASPECT_BIND_GROUPS]) {

@@ -185,20 +185,18 @@ void frame() {
     static const uint32_t vertexBufferOffsets[1] = {0};
     nxt::CommandBuffer commands = device.CreateCommandBufferBuilder()
         .BeginRenderPass(renderpass, framebuffer)
-            // renderTarget is not transitioned here because it's implicit in
-            // BeginRenderPass or AdvanceSubpass.
             .BeginRenderSubpass()
+                // renderTarget implicitly locked to to Attachment usage (if not already frozen)
                 .SetPipeline(pipeline)
                 .SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets)
                 .DrawArrays(3, 1, 0, 0)
             .EndRenderSubpass()
-            // renderTarget must be transitioned here because it's Sampled, not
-            // ColorAttachment or InputAttachment.
-            .TransitionTextureUsage(renderTarget, nxt::TextureUsageBit::Sampled)
+            // renderTarget usage unlocked, but left in Attachment usage
             .BeginRenderSubpass()
                 .SetPipeline(pipelinePost)
-                .SetBindGroup(0, bindGroup)
                 .SetVertexBuffers(0, 1, &vertexBufferQuad, vertexBufferOffsets)
+                .TransitionTextureUsage(renderTarget, nxt::TextureUsageBit::Sampled)
+                .SetBindGroup(0, bindGroup)
                 .DrawArrays(6, 1, 0, 0)
             .EndRenderSubpass()
         .EndRenderPass()

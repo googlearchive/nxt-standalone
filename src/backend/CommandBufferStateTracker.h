@@ -48,12 +48,14 @@ namespace backend {
             bool SetVertexBuffer(uint32_t index, BufferBase* buffer);
             bool TransitionBufferUsage(BufferBase* buffer, nxt::BufferUsageBit usage);
             bool TransitionTextureUsage(TextureBase* texture, nxt::TextureUsageBit usage);
+            bool EnsureTextureUsage(TextureBase* texture, nxt::TextureUsageBit usage);
 
             // These collections are copied to the CommandBuffer at build time.
             // These pointers will remain valid since they are referenced by
             // the bind groups which are referenced by this command buffer.
             std::set<BufferBase*> buffersTransitioned;
             std::set<TextureBase*> texturesTransitioned;
+            std::set<TextureBase*> texturesAttached;
 
         private:
             enum ValidationAspect {
@@ -71,7 +73,8 @@ namespace backend {
             // Usage helper functions
             bool BufferHasGuaranteedUsageBit(BufferBase* buffer, nxt::BufferUsageBit usage) const;
             bool TextureHasGuaranteedUsageBit(TextureBase* texture, nxt::TextureUsageBit usage) const;
-            bool IsTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const;
+            bool IsInternalTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const;
+            bool IsExplicitTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const;
 
             // Queries for lazily evaluated aspects
             bool RecomputeHaveAspectBindGroups();
