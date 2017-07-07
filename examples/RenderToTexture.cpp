@@ -59,8 +59,8 @@ void initTextures() {
         .SetExtent(640, 480, 1)
         .SetFormat(nxt::TextureFormat::R8G8B8A8Unorm)
         .SetMipLevels(1)
-        .SetAllowedUsage(nxt::TextureUsageBit::ColorAttachment | nxt::TextureUsageBit::Sampled)
-        .SetInitialUsage(nxt::TextureUsageBit::ColorAttachment)
+        .SetAllowedUsage(nxt::TextureUsageBit::OutputAttachment | nxt::TextureUsageBit::Sampled)
+        .SetInitialUsage(nxt::TextureUsageBit::OutputAttachment)
         .GetResult();
     renderTargetView = renderTarget.CreateTextureViewBuilder().GetResult();
 

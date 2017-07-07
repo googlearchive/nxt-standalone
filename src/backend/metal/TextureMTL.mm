@@ -38,8 +38,12 @@ namespace metal {
                 result |= MTLTextureUsageShaderRead;
             }
 
-            if (usage & (nxt::TextureUsageBit::ColorAttachment | nxt::TextureUsageBit::DepthStencilAttachment)) {
+            if (usage & (nxt::TextureUsageBit::OutputAttachment)) {
                 result |= MTLTextureUsageRenderTarget;
+            }
+
+            if (usage & (nxt::TextureUsageBit::InputAttachment)) {
+                result |= MTLTextureUsageShaderRead;
             }
 
             return result;

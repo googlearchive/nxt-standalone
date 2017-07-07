@@ -148,8 +148,8 @@ namespace backend {
             }
 
             auto* texture = tv->GetTexture();
-            if (!EnsureTextureUsage(texture, nxt::TextureUsageBit::ColorAttachment)) {
-                builder->HandleError("Unable to ensure texture has ColorAttachment usage");
+            if (!EnsureTextureUsage(texture, nxt::TextureUsageBit::OutputAttachment)) {
+                builder->HandleError("Unable to ensure texture has OutputAttachment usage");
                 return false;
             }
             texturesAttached.insert(texture);
@@ -355,13 +355,13 @@ namespace backend {
     }
 
     bool CommandBufferStateTracker::EnsureTextureUsage(TextureBase* texture, nxt::TextureUsageBit usage) {
-        if (texture->HasFrozenUsage(nxt::TextureUsageBit::ColorAttachment)) {
+        if (texture->HasFrozenUsage(nxt::TextureUsageBit::OutputAttachment)) {
             return true;
         }
-        if (!IsInternalTextureTransitionPossible(texture, nxt::TextureUsageBit::ColorAttachment)) {
+        if (!IsInternalTextureTransitionPossible(texture, nxt::TextureUsageBit::OutputAttachment)) {
             return false;
         }
-        mostRecentTextureUsages[texture] = nxt::TextureUsageBit::ColorAttachment;
+        mostRecentTextureUsages[texture] = nxt::TextureUsageBit::OutputAttachment;
         texturesTransitioned.insert(texture);
         return true;
     }
@@ -394,8 +394,8 @@ namespace backend {
 
     bool CommandBufferStateTracker::IsExplicitTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const {
         const nxt::TextureUsageBit attachmentUsages =
-            nxt::TextureUsageBit::ColorAttachment |
-            nxt::TextureUsageBit::DepthStencilAttachment;
+            nxt::TextureUsageBit::OutputAttachment |
+            nxt::TextureUsageBit::InputAttachment;
         if (usage & attachmentUsages) {
             return false;
         }
