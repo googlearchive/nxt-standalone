@@ -123,8 +123,9 @@ namespace d3d12 {
             void OpenCommandList(ComPtr<ID3D12GraphicsCommandList>* commandList);
             ComPtr<ID3D12GraphicsCommandList> GetPendingCommandList();
 
-            D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetDescriptor();
-            void SetNextRenderTargetDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE renderTargetDescriptor);
+            ComPtr<ID3D12Resource> GetCurrentTexture();
+            ComPtr<ID3D12Resource> GetCurrentDepthTexture();
+            void SetNextTexture(ComPtr<ID3D12Resource> resource, ComPtr<ID3D12Resource> depthResource);
 
             uint64_t GetSerial() const;
             void NextSerial();
@@ -151,7 +152,8 @@ namespace d3d12 {
                 bool open = false;
             } pendingCommands;
 
-            D3D12_CPU_DESCRIPTOR_HANDLE renderTargetDescriptor;
+            ComPtr<ID3D12Resource> nextTexture;
+            ComPtr<ID3D12Resource> nextDepthTexture;
     };
 
     class Framebuffer : public FramebufferBase {

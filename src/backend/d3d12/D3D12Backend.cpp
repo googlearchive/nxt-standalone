@@ -48,9 +48,9 @@ namespace d3d12 {
         return backendDevice->GetCommandQueue();
     }
 
-    void SetNextRenderTargetDescriptor(nxtDevice device, D3D12_CPU_DESCRIPTOR_HANDLE renderTargetDescriptor) {
+    void SetNextTexture(nxtDevice device, ComPtr<ID3D12Resource> resource, ComPtr<ID3D12Resource> depthResource) {
         Device* backendDevice = reinterpret_cast<Device*>(device);
-        backendDevice->SetNextRenderTargetDescriptor(renderTargetDescriptor);
+        backendDevice->SetNextTexture(resource, depthResource);
     }
 
     uint64_t GetSerial(const nxtDevice device) {
@@ -155,14 +155,17 @@ namespace d3d12 {
         return pendingCommands.commandList;
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Device::GetCurrentRenderTargetDescriptor() {
-        return renderTargetDescriptor;
+    ComPtr<ID3D12Resource> Device::GetCurrentTexture() {
+        return nextTexture;
     }
 
-    void Device::SetNextRenderTargetDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE renderTargetDescriptor) {
-        this->renderTargetDescriptor = renderTargetDescriptor;
-        static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        GetPendingCommandList()->ClearRenderTargetView(renderTargetDescriptor, clearColor, 0, nullptr);
+    ComPtr<ID3D12Resource> Device::GetCurrentDepthTexture() {
+        return nextDepthTexture;
+    }
+
+    void Device::SetNextTexture(ComPtr<ID3D12Resource> resource, ComPtr<ID3D12Resource> depthResource) {
+        nextTexture = resource;
+        nextDepthTexture = depthResource;
     }
 
     void Device::TickImpl() {

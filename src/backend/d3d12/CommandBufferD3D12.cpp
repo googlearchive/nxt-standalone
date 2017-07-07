@@ -192,7 +192,7 @@ namespace d3d12 {
                     D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
             }
         }
-    
+
         D3D12_TEXTURE_COPY_LOCATION D3D12PlacedTextureCopyLocation(BufferCopyLocation& bufferLocation, Texture* texture, const TextureCopyLocation& textureLocation) {
             D3D12_TEXTURE_COPY_LOCATION d3d12Location;
             d3d12Location.pResource = ToBackend(bufferLocation.buffer.Get())->GetD3D12Resource().Get();
@@ -252,6 +252,7 @@ namespace d3d12 {
 
         RenderPass* currentRenderPass = nullptr;
         Framebuffer* currentFramebuffer = nullptr;
+        uint32_t currentSubpass = 0;
 
         while(commands.NextCommandId(&type)) {
             switch (type) {
@@ -266,6 +267,7 @@ namespace d3d12 {
                         BeginRenderPassCmd* beginRenderPassCmd = commands.NextCommand<BeginRenderPassCmd>();
                         currentRenderPass = ToBackend(beginRenderPassCmd->renderPass.Get());
                         currentFramebuffer = ToBackend(beginRenderPassCmd->framebuffer.Get());
+                        currentSubpass = 0;
 
                         uint32_t width = currentFramebuffer->GetWidth();
                         uint32_t height = currentFramebuffer->GetHeight();
@@ -273,14 +275,66 @@ namespace d3d12 {
                         D3D12_RECT scissorRect = { 0, 0, static_cast<long>(width), static_cast<long>(height) };
                         commandList->RSSetViewports(1, &viewport);
                         commandList->RSSetScissorRects(1, &scissorRect);
-                        D3D12_CPU_DESCRIPTOR_HANDLE rtv = device->GetCurrentRenderTargetDescriptor();
-                        commandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
                     }
                     break;
 
                 case Command::BeginRenderSubpass:
                     {
                         commands.NextCommand<BeginRenderSubpassCmd>();
+                        const auto& subpassInfo = currentRenderPass->GetSubpassInfo(currentSubpass);
+
+                        uint32_t attachmentCount = currentRenderPass->GetAttachmentCount();
+                        bool usingBackbuffer = false; // HACK(enga@google.com): workaround for not having depth attachments
+
+                        DescriptorHeapHandle rtvHeap = device->GetDescriptorHeapAllocator()->AllocateCPUHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, attachmentCount);
+                        uint32_t rtvIndex = 0;
+
+                        for (uint32_t index : IterateBitSet(subpassInfo.colorAttachmentsSet)) {
+                            uint32_t attachment = subpassInfo.colorAttachments[index];
+                            const auto& attachmentInfo = currentRenderPass->GetAttachmentInfo(attachment);
+
+                            ComPtr<ID3D12Resource> texture;
+                            if (auto textureView = currentFramebuffer->GetTextureView(attachment)) {
+                                texture = ToBackend(textureView->GetTexture())->GetD3D12Resource();
+                            } else {
+                                usingBackbuffer = true;
+                                texture = device->GetCurrentTexture();
+                            }
+
+                            D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap.GetCPUHandle(rtvIndex++);
+                            D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
+                            rtvDesc.Format = Texture::D3D12TextureFormat(attachmentInfo.format);
+                            rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+                            rtvDesc.Texture2D.MipSlice = 0;
+                            rtvDesc.Texture2D.PlaneSlice = 0;
+
+                            device->GetD3D12Device()->CreateRenderTargetView(texture.Get(), &rtvDesc, rtvHandle);
+
+                            // HACK(enga@google.com): Remove when clearing is implemented
+                            static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                            commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+                        }
+
+                        // TODO(enga@google.com): load depth attachment from subpass
+                        if (usingBackbuffer) {
+                            DescriptorHeapHandle dsvHeap = device->GetDescriptorHeapAllocator()->AllocateCPUHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
+                            D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap.GetCPUHandle(0);
+
+                            D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+                            dsvDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+                            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+                            dsvDesc.Texture2D.MipSlice = 0;
+                            dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+                            device->GetD3D12Device()->CreateDepthStencilView(device->GetCurrentDSVTexture().Get(), &dsvDesc, dsvHandle);
+
+                            // HACK(enga@google.com): Remove when clearing is implemented
+                            commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0, 0, 0, nullptr);
+
+                            commandList->OMSetRenderTargets(rtvIndex, &rtvHeap.GetCPUHandle(0), TRUE, &dsvHandle);
+                        } else {
+                            commandList->OMSetRenderTargets(rtvIndex, &rtvHeap.GetCPUHandle(0), TRUE, nullptr);
+                        }
                     }
                     break;
 
@@ -389,6 +443,7 @@ namespace d3d12 {
                 case Command::EndRenderSubpass:
                     {
                         commands.NextCommand<EndRenderSubpassCmd>();
+                        currentSubpass += 1;
                     }
                     break;
 
