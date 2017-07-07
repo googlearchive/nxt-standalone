@@ -42,12 +42,6 @@ namespace d3d12 {
                     resourceState |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
                 }
             }
-            if (usage & nxt::TextureUsageBit::InputAttachment) {
-                resourceState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-                if (TextureBase::IsDepthFormat(format)) {
-                    resourceState |= D3D12_RESOURCE_STATE_DEPTH_READ;
-                }
-            }
 
             return resourceState;
         }

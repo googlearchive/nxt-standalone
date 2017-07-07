@@ -74,7 +74,7 @@ namespace backend {
         }
         // Compute the lazily computed aspects
         if (!RecomputeHaveAspectBindGroups()) {
-            builder->HandleError("Some bind groups are not set");
+            builder->HandleError("Bind group state not valid");
             return false;
         }
         return true;
@@ -270,18 +270,11 @@ namespace backend {
     }
 
     bool CommandBufferStateTracker::SetBindGroup(uint32_t index, BindGroupBase* bindgroup) {
-        if (!HavePipeline()) {
-            builder->HandleError("Can't set the bind group without a pipeline");
-            return false;
-        }
-        if (bindgroup->GetLayout() != lastPipeline->GetLayout()->GetBindGroupLayout(index)) {
-            builder->HandleError("Bind group layout mismatch");
-            return false;
-        }
         if (!ValidateBindGroupUsages(bindgroup)) {
             return false;
         }
         bindgroupsSet.set(index);
+        bindgroups[index] = bindgroup;
 
         return true;
     }
@@ -394,8 +387,7 @@ namespace backend {
 
     bool CommandBufferStateTracker::IsExplicitTextureTransitionPossible(TextureBase* texture, nxt::TextureUsageBit usage) const {
         const nxt::TextureUsageBit attachmentUsages =
-            nxt::TextureUsageBit::OutputAttachment |
-            nxt::TextureUsageBit::InputAttachment;
+            nxt::TextureUsageBit::OutputAttachment;
         if (usage & attachmentUsages) {
             return false;
         }
@@ -406,17 +398,29 @@ namespace backend {
         if (aspects[VALIDATION_ASPECT_BIND_GROUPS]) {
             return true;
         }
-        if (bindgroupsSet.all()) {
-            aspects.set(VALIDATION_ASPECT_BIND_GROUPS);
-            return true;
+        // Assumes we have a pipeline already
+        if (!bindgroupsSet.all()) {
+            printf("%s:%d\n", __FUNCTION__, __LINE__);
+            return false;
         }
-        return false;
+        for (size_t i = 0; i < bindgroups.size(); ++i) {
+            if (auto* bindgroup = bindgroups[i]) {
+                // TODO(kainino@chromium.org): bind group compatibility
+                if (bindgroup->GetLayout() != lastPipeline->GetLayout()->GetBindGroupLayout(i)) {
+                    printf("%s:%d: i=%zu\n", __FUNCTION__, __LINE__, i);
+                    return false;
+                }
+            }
+        }
+        aspects.set(VALIDATION_ASPECT_BIND_GROUPS);
+        return true;
     }
 
     bool CommandBufferStateTracker::RecomputeHaveAspectVertexBuffers() {
         if (aspects[VALIDATION_ASPECT_VERTEX_BUFFERS]) {
             return true;
         }
+        // Assumes we have a pipeline already
         auto requiredInputs = lastPipeline->GetInputState()->GetInputsSetMask();
         if ((inputsSet & ~requiredInputs).none()) {
             aspects.set(VALIDATION_ASPECT_VERTEX_BUFFERS);
@@ -491,7 +495,7 @@ namespace backend {
         }
         // Compute the lazily computed aspects
         if (!RecomputeHaveAspectBindGroups()) {
-            builder->HandleError("Some bind groups are not set");
+            builder->HandleError("Bind group state not valid");
             return false;
         }
         if (!RecomputeHaveAspectVertexBuffers()) {
@@ -509,5 +513,6 @@ namespace backend {
               1 << VALIDATION_ASPECT_VERTEX_BUFFERS |
               1 << VALIDATION_ASPECT_INDEX_BUFFER);
         aspects &= pipelineDependentAspectsInverse;
+        bindgroups.fill(nullptr);
     }
 }

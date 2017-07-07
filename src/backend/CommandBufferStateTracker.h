@@ -18,6 +18,7 @@
 #include "backend/CommandBuffer.h"
 #include "common/Constants.h"
 
+#include <array>
 #include <bitset>
 #include <map>
 #include <set>
@@ -91,6 +92,7 @@ namespace backend {
             ValidationAspects aspects;
 
             std::bitset<kMaxBindGroups> bindgroupsSet;
+            std::array<BindGroupBase*, kMaxBindGroups> bindgroups = {};
             std::bitset<kMaxVertexInputs> inputsSet;
             PipelineBase* lastPipeline = nullptr;
 

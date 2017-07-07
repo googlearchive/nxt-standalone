@@ -42,10 +42,6 @@ namespace metal {
                 result |= MTLTextureUsageRenderTarget;
             }
 
-            if (usage & (nxt::TextureUsageBit::InputAttachment)) {
-                result |= MTLTextureUsageShaderRead;
-            }
-
             return result;
         }
 
