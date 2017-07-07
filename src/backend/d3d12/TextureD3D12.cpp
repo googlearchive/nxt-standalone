@@ -46,17 +46,17 @@ namespace d3d12 {
             return resourceState;
         }
 
-        D3D12_RESOURCE_FLAGS D3D12ResourceFlags(nxt::TextureUsageBit usage) {
+        D3D12_RESOURCE_FLAGS D3D12ResourceFlags(nxt::TextureUsageBit usage, nxt::TextureFormat format) {
             D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 
             if (usage & nxt::TextureUsageBit::Storage) {
                 flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             }
-            if (usage & nxt::TextureUsageBit::ColorAttachment) {
+            if (usage & nxt::TextureUsageBit::OutputAttachment) {
                 flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-            }
-            if (usage & nxt::TextureUsageBit::DepthStencilAttachment) {
-                flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+                if (TextureBase::IsDepthFormat(format)) {
+                    flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+                }
             }
 
             return flags;
@@ -91,7 +91,7 @@ namespace d3d12 {
         resourceDescriptor.SampleDesc.Count = 1;
         resourceDescriptor.SampleDesc.Quality = 0;
         resourceDescriptor.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resourceDescriptor.Flags = D3D12ResourceFlags(GetUsage());
+        resourceDescriptor.Flags = D3D12ResourceFlags(GetUsage(), GetFormat());
 
         resource = device->GetResourceAllocator()->Allocate(D3D12_HEAP_TYPE_DEFAULT, resourceDescriptor, D3D12TextureUsage(GetUsage(), GetFormat()));
     }
