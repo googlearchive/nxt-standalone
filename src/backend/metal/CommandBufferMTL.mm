@@ -141,6 +141,13 @@ namespace metal {
         uint32_t currentSubpass = 0;
         while (commands.NextCommandId(&type)) {
             switch (type) {
+                case Command::BeginComputePass:
+                    {
+                        commands.NextCommand<BeginComputePassCmd>();
+                        // XXX: begin compute pass
+                    }
+                    break;
+
                 case Command::BeginRenderPass:
                     {
                         BeginRenderPassCmd* beginRenderPassCmd = commands.NextCommand<BeginRenderPassCmd>();
@@ -279,6 +286,13 @@ namespace metal {
                             instanceCount:draw->instanceCount
                             baseVertex:0
                             baseInstance:draw->firstInstance];
+                    }
+                    break;
+
+                case Command::EndComputePass:
+                    {
+                        commands.NextCommand<EndComputePassCmd>();
+                        // XXX: end compute pass
                     }
                     break;
 
