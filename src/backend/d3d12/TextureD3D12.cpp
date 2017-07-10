@@ -158,5 +158,14 @@ namespace d3d12 {
         return srvDesc;
     }
 
+    D3D12_RENDER_TARGET_VIEW_DESC TextureView::GetRTVDescriptor() {
+        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
+        rtvDesc.Format = ToBackend(GetTexture())->GetD3D12Format();
+        rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+        rtvDesc.Texture2D.MipSlice = 0;
+        rtvDesc.Texture2D.PlaneSlice = 0;
+        return rtvDesc;
+    }
+
 }
 }

@@ -20,6 +20,7 @@
 #include "backend/d3d12/CommandAllocatorManager.h"
 #include "backend/d3d12/CommandBufferD3D12.h"
 #include "backend/d3d12/DescriptorHeapAllocator.h"
+#include "backend/d3d12/FramebufferD3D12.h"
 #include "backend/d3d12/InputStateD3D12.h"
 #include "backend/d3d12/PipelineD3D12.h"
 #include "backend/d3d12/PipelineLayoutD3D12.h"
@@ -263,12 +264,6 @@ namespace d3d12 {
 
     DepthStencilState::DepthStencilState(Device* device, DepthStencilStateBuilder* builder)
         : DepthStencilStateBase(builder), device(device) {
-    }
-
-    // Framebuffer
-
-    Framebuffer::Framebuffer(Device* device, FramebufferBuilder* builder)
-        : FramebufferBase(builder), device(device) {
     }
 
     // RenderPass

@@ -156,14 +156,6 @@ namespace d3d12 {
             ComPtr<ID3D12Resource> nextDepthTexture;
     };
 
-    class Framebuffer : public FramebufferBase {
-        public:
-            Framebuffer(Device* device, FramebufferBuilder* builder);
-
-        private:
-            Device* device;
-    };
-
     class DepthStencilState : public DepthStencilStateBase {
         public:
             DepthStencilState(Device* device, DepthStencilStateBuilder* builder);

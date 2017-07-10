@@ -20,6 +20,7 @@
 #include "backend/d3d12/BindGroupLayoutD3D12.h"
 #include "backend/d3d12/BufferD3D12.h"
 #include "backend/d3d12/DescriptorHeapAllocator.h"
+#include "backend/d3d12/FramebufferD3D12.h"
 #include "backend/d3d12/InputStateD3D12.h"
 #include "backend/d3d12/PipelineD3D12.h"
 #include "backend/d3d12/PipelineLayoutD3D12.h"
@@ -205,9 +206,9 @@ namespace d3d12 {
 
             uint32_t texelSize = 0;
             switch (texture->GetFormat()) {
-				case nxt::TextureFormat::R8G8B8A8Unorm:
-					texelSize = 4;
-					break;
+                case nxt::TextureFormat::R8G8B8A8Unorm:
+                    texelSize = 4;
+                    break;
             }
             uint32_t rowSize = textureLocation.width * texelSize;
             d3d12Location.PlacedFootprint.Footprint.RowPitch = ((rowSize - 1) / D3D12_TEXTURE_DATA_PITCH_ALIGNMENT + 1) * D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
@@ -281,59 +282,21 @@ namespace d3d12 {
                 case Command::BeginRenderSubpass:
                     {
                         commands.NextCommand<BeginRenderSubpassCmd>();
-                        const auto& subpassInfo = currentRenderPass->GetSubpassInfo(currentSubpass);
+                        Framebuffer::OMSetRenderTargetArgs args = currentFramebuffer->GetSubpassOMSetRenderTargetArgs(currentSubpass);
 
-                        uint32_t attachmentCount = currentRenderPass->GetAttachmentCount();
-                        bool usingBackbuffer = false; // HACK(enga@google.com): workaround for not having depth attachments
-
-                        DescriptorHeapHandle rtvHeap = device->GetDescriptorHeapAllocator()->AllocateCPUHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, attachmentCount);
-                        uint32_t rtvIndex = 0;
-
-                        for (uint32_t index : IterateBitSet(subpassInfo.colorAttachmentsSet)) {
-                            uint32_t attachment = subpassInfo.colorAttachments[index];
-                            const auto& attachmentInfo = currentRenderPass->GetAttachmentInfo(attachment);
-
-                            ComPtr<ID3D12Resource> texture;
-                            if (auto textureView = currentFramebuffer->GetTextureView(attachment)) {
-                                texture = ToBackend(textureView->GetTexture())->GetD3D12Resource();
-                            } else {
-                                usingBackbuffer = true;
-                                texture = device->GetCurrentTexture();
-                            }
-
-                            D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap.GetCPUHandle(rtvIndex++);
-                            D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
-                            rtvDesc.Format = Texture::D3D12TextureFormat(attachmentInfo.format);
-                            rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-                            rtvDesc.Texture2D.MipSlice = 0;
-                            rtvDesc.Texture2D.PlaneSlice = 0;
-
-                            device->GetD3D12Device()->CreateRenderTargetView(texture.Get(), &rtvDesc, rtvHandle);
-
-                            // HACK(enga@google.com): Remove when clearing is implemented
+                        // HACK(enga@google.com): Remove when clearing is implemented
+                        for (uint32_t index = 0; index < args.numRTVs; ++index) {
                             static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                            commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+                            commandList->ClearRenderTargetView(args.RTVs[index], clearColor, 0, nullptr);
                         }
 
-                        // TODO(enga@google.com): load depth attachment from subpass
-                        if (usingBackbuffer) {
-                            DescriptorHeapHandle dsvHeap = device->GetDescriptorHeapAllocator()->AllocateCPUHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
-                            D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap.GetCPUHandle(0);
-
-                            D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-                            dsvDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-                            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-                            dsvDesc.Texture2D.MipSlice = 0;
-                            dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-                            device->GetD3D12Device()->CreateDepthStencilView(device->GetCurrentDSVTexture().Get(), &dsvDesc, dsvHandle);
-
+                        if (args.dsv.ptr) {
                             // HACK(enga@google.com): Remove when clearing is implemented
-                            commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0, 0, 0, nullptr);
+                            commandList->ClearDepthStencilView(args.dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0, 0, 0, nullptr);
 
-                            commandList->OMSetRenderTargets(rtvIndex, &rtvHeap.GetCPUHandle(0), TRUE, &dsvHandle);
+                            commandList->OMSetRenderTargets(args.numRTVs, args.RTVs, FALSE, &args.dsv);
                         } else {
-                            commandList->OMSetRenderTargets(rtvIndex, &rtvHeap.GetCPUHandle(0), TRUE, nullptr);
+                            commandList->OMSetRenderTargets(args.numRTVs, args.RTVs, FALSE, nullptr);
                         }
                     }
                     break;
