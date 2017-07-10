@@ -24,6 +24,7 @@
 #include "backend/PipelineLayout.h"
 #include "backend/RenderPass.h"
 #include "backend/Texture.h"
+#include "common/Assert.h"
 #include "common/BitSetIterator.h"
 
 namespace backend {
@@ -457,7 +458,7 @@ namespace backend {
                                 break;
 
                             default:
-                                assert(false);
+                                ASSERT(false);
                                 return false;
                         }
 
