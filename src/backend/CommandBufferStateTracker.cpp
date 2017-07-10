@@ -118,6 +118,10 @@ namespace backend {
             builder->HandleError("Can't end command buffer with an active render pass");
             return false;
         }
+        if (aspects[VALIDATION_ASPECT_COMPUTE_PASS]) {
+            builder->HandleError("Can't end command buffer with an active compute pass");
+            return false;
+        }
         return true;
     }
 

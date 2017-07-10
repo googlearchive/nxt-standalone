@@ -47,31 +47,35 @@ namespace metal {
             RenderPass* currentRenderPass = nullptr;
             Framebuffer* currentFramebuffer = nullptr;
 
-            void FinishEncoders() {
+            void EnsureNoBlitEncoder() {
                 ASSERT(render == nil);
+                ASSERT(compute == nil);
                 if (blit != nil) {
                     [blit endEncoding];
                     blit = nil;
                 }
-                if (compute != nil) {
-                    [compute endEncoding];
-                    compute = nil;
-                }
             }
 
             void EnsureBlit(id<MTLCommandBuffer> commandBuffer) {
+                ASSERT(render == nil);
+                ASSERT(compute == nil);
                 if (blit == nil) {
-                    FinishEncoders();
                     blit = [commandBuffer blitCommandEncoder];
                 }
             }
-            void EnsureCompute(id<MTLCommandBuffer> commandBuffer) {
-                if (compute == nil) {
-                    FinishEncoders();
-                    compute = [commandBuffer computeCommandEncoder];
-                    // TODO(cwallez@chromium.org): does any state need to be reset?
-                }
+
+            void BeginCompute(id<MTLCommandBuffer> commandBuffer) {
+                EnsureNoBlitEncoder();
+                compute = [commandBuffer computeCommandEncoder];
+                // TODO(cwallez@chromium.org): does any state need to be reset?
             }
+
+            void EndCompute() {
+                ASSERT(compute != nil);
+                [compute endEncoding];
+                compute = nil;
+            }
+
             void BeginSubpass(id<MTLCommandBuffer> commandBuffer, uint32_t subpass) {
                 ASSERT(currentRenderPass);
                 if (render != nil) {
@@ -111,7 +115,8 @@ namespace metal {
                 render = [commandBuffer renderCommandEncoderWithDescriptor:descriptor];
                 // TODO(cwallez@chromium.org): does any state need to be reset?
             }
-            void EndRenderPass() {
+
+            void EndSubpass() {
                 ASSERT(render != nil);
                 [render endEncoding];
                 render = nil;
@@ -144,7 +149,7 @@ namespace metal {
                 case Command::BeginComputePass:
                     {
                         commands.NextCommand<BeginComputePassCmd>();
-                        // XXX: begin compute pass
+                        encoders.BeginCompute(commandBuffer);
                     }
                     break;
 
@@ -153,7 +158,7 @@ namespace metal {
                         BeginRenderPassCmd* beginRenderPassCmd = commands.NextCommand<BeginRenderPassCmd>();
                         encoders.currentRenderPass = ToBackend(beginRenderPassCmd->renderPass.Get());
                         encoders.currentFramebuffer = ToBackend(beginRenderPassCmd->framebuffer.Get());
-                        encoders.FinishEncoders();
+                        encoders.EnsureNoBlitEncoder();
                         currentSubpass = 0;
                     }
                     break;
@@ -250,7 +255,7 @@ namespace metal {
                 case Command::Dispatch:
                     {
                         DispatchCmd* dispatch = commands.NextCommand<DispatchCmd>();
-                        encoders.EnsureCompute(commandBuffer);
+                        ASSERT(encoders.compute);
                         ASSERT(lastPipeline->IsCompute());
 
                         [encoders.compute dispatchThreadgroups:MTLSizeMake(dispatch->x, dispatch->y, dispatch->z)
@@ -292,20 +297,20 @@ namespace metal {
                 case Command::EndComputePass:
                     {
                         commands.NextCommand<EndComputePassCmd>();
-                        // XXX: end compute pass
+                        encoders.EndCompute();
                     }
                     break;
 
                 case Command::EndRenderPass:
                     {
                         commands.NextCommand<EndRenderPassCmd>();
-                        encoders.EndRenderPass();
                     }
                     break;
 
                 case Command::EndRenderSubpass:
                     {
                         commands.NextCommand<EndRenderSubpassCmd>();
+                        encoders.EndSubpass();
                         currentSubpass += 1;
                     }
                     break;
@@ -316,7 +321,7 @@ namespace metal {
                         lastPipeline = ToBackend(cmd->pipeline).Get();
 
                         if (lastPipeline->IsCompute()) {
-                            encoders.EnsureCompute(commandBuffer);
+                            ASSERT(encoders.compute);
                             lastPipeline->Encode(encoders.compute);
                         } else {
                             ASSERT(encoders.render);
@@ -354,7 +359,7 @@ namespace metal {
                         const auto& layout = group->GetLayout()->GetBindingInfo();
 
                         if (lastPipeline->IsCompute()) {
-                            encoders.EnsureCompute(commandBuffer);
+                            ASSERT(encoders.compute);
                         } else {
                             ASSERT(encoders.render);
                         }
@@ -515,7 +520,9 @@ namespace metal {
             }
         }
 
-        encoders.FinishEncoders();
+        encoders.EnsureNoBlitEncoder();
+        ASSERT(encoders.render == nil);
+        ASSERT(encoders.compute == nil);
     }
 
 }
