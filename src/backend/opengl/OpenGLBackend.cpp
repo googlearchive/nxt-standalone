@@ -119,7 +119,7 @@ namespace opengl {
     void Device::InitBackbuffer() {
         glGenTextures(1, &backTexture);
         glBindTexture(GL_TEXTURE_2D, backTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 640, 480, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
         glGenTextures(1, &backDepthTexture);
         glBindTexture(GL_TEXTURE_2D, backDepthTexture);
@@ -131,6 +131,8 @@ namespace opengl {
                 GL_TEXTURE_2D, backTexture, 0);
         glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
                 GL_TEXTURE_2D, backDepthTexture, 0);
+
+        HACKCLEAR();
     }
 
     void Device::CommitBackbuffer() {

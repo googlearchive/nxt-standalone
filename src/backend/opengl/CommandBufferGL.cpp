@@ -88,6 +88,10 @@ namespace opengl {
                 case Command::BeginRenderSubpass:
                     {
                         commands.NextCommand<BeginRenderSubpassCmd>();
+                        // TODO(kainino@chromium.org): possible future
+                        // optimization: create these framebuffers at command
+                        // buffer build time so they don't have to be created
+                        // and destroyed at draw time.
                         glGenFramebuffers(1, &currentFBO);
                         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
 
