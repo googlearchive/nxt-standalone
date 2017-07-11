@@ -71,13 +71,14 @@ namespace d3d12 {
             }
         }
 
-        DXGI_FORMAT D3D12TextureFormat(nxt::TextureFormat format) {
-            switch (format) {
-                case nxt::TextureFormat::R8G8B8A8Unorm:
-                    return DXGI_FORMAT_R8G8B8A8_UNORM;
-                default:
-                    UNREACHABLE();
-            }
+    }
+
+    DXGI_FORMAT D3D12TextureFormat(nxt::TextureFormat format) {
+        switch (format) {
+            case nxt::TextureFormat::R8G8B8A8Unorm:
+                return DXGI_FORMAT_R8G8B8A8_UNORM;
+            default:
+                UNREACHABLE();
         }
     }
 

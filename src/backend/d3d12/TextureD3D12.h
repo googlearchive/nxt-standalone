@@ -24,6 +24,8 @@ namespace d3d12 {
 
     class Device;
 
+    DXGI_FORMAT D3D12TextureFormat(nxt::TextureFormat format);
+
     class Texture : public TextureBase {
         public:
             Texture(Device* device, TextureBuilder* builder);
