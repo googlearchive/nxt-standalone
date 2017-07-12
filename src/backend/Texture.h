@@ -44,6 +44,7 @@ namespace backend {
             void UpdateUsageInternal(nxt::TextureUsageBit usage);
 
             static bool IsDepthFormat(nxt::TextureFormat format);
+            static bool IsStencilFormat(nxt::TextureFormat format);
 
             DeviceBase* GetDevice();
 

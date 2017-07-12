@@ -103,7 +103,6 @@ namespace opengl {
                         auto* device = ToBackend(GetDevice());
                         const auto& info = currentRenderPass->GetSubpassInfo(currentSubpass);
 
-                        bool usingBackbuffer = false; // HACK(kainino@chromium.org): workaround for not having depth attachments
                         for (uint32_t index = 0; index < info.colorAttachments.size(); ++index) {
                             uint32_t attachment = info.colorAttachments[index];
 
@@ -115,16 +114,30 @@ namespace opengl {
                                 texture = ToBackend(textureView->GetTexture())->GetHandle();
                             } else {
                                 texture = device->GetCurrentTexture();
-                                usingBackbuffer = true;
                             }
                             glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
                                     GL_TEXTURE_2D, texture, 0);
                         }
-                        // TODO(kainino@chromium.org): load depth attachment from subpass
-                        if (usingBackbuffer) {
-                            GLuint texture = device->GetCurrentDepthTexture();
-                            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                                    GL_TEXTURE_2D, texture, 0);
+                        if (info.depthStencilAttachmentSet) {
+                            uint32_t attachment = info.depthStencilAttachment;
+
+                            auto textureView = currentFramebuffer->GetTextureView(attachment);
+                            GLuint texture = ToBackend(textureView->GetTexture())->GetHandle();
+                            nxt::TextureFormat format = textureView->GetTexture()->GetFormat();
+                            if (TextureBase::IsDepthFormat(format)) {
+                                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                        GL_TEXTURE_2D, texture, 0);
+                                // Load action
+                                glClearDepth(1.0);
+                                glClear(GL_DEPTH_BUFFER_BIT);
+                            }
+                            if (TextureBase::IsStencilFormat(format)) {
+                                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                                        GL_TEXTURE_2D, texture, 0);
+                                // Load action
+                                glClearStencil(0);
+                                glClear(GL_STENCIL_BUFFER_BIT);
+                            }
                         }
                     }
                     break;
