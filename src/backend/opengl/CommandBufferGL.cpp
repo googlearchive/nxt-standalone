@@ -115,7 +115,8 @@ namespace opengl {
                             } else {
                                 texture = device->GetCurrentTexture();
                             }
-                            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
+                            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER,
+                                    GL_COLOR_ATTACHMENT0 + index,
                                     GL_TEXTURE_2D, texture, 0);
                         }
                         if (info.depthStencilAttachmentSet) {
@@ -124,20 +125,24 @@ namespace opengl {
                             auto textureView = currentFramebuffer->GetTextureView(attachment);
                             GLuint texture = ToBackend(textureView->GetTexture())->GetHandle();
                             nxt::TextureFormat format = textureView->GetTexture()->GetFormat();
-                            if (TextureBase::IsDepthFormat(format)) {
-                                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                        GL_TEXTURE_2D, texture, 0);
-                                // Load action
-                                glClearDepth(1.0);
-                                glClear(GL_DEPTH_BUFFER_BIT);
+
+                            GLenum glAttachment = 0;
+                            if (TextureFormatHasDepth(format)) {
+                                if (TextureFormatHasStencil(format)) {
+                                    glAttachment = GL_DEPTH_STENCIL_ATTACHMENT;
+                                } else {
+                                    glAttachment = GL_DEPTH_ATTACHMENT;
+                                }
+                            } else {
+                                glAttachment = GL_STENCIL_ATTACHMENT;
                             }
-                            if (TextureBase::IsStencilFormat(format)) {
-                                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
-                                        GL_TEXTURE_2D, texture, 0);
-                                // Load action
-                                glClearStencil(0);
-                                glClear(GL_STENCIL_BUFFER_BIT);
-                            }
+
+                            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER,
+                                    glAttachment, GL_TEXTURE_2D, texture, 0);
+                            // Load action
+                            glClearStencil(0);
+                            glClearDepth(1.0);
+                            glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                         }
                     }
                     break;

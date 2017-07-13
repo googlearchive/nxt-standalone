@@ -109,13 +109,13 @@ namespace metal {
                     auto textureView = currentFramebuffer->GetTextureView(attachment);
                     id<MTLTexture> texture = ToBackend(textureView->GetTexture())->GetMTLTexture();
                     nxt::TextureFormat format = textureView->GetTexture()->GetFormat();
-                    if (TextureBase::IsDepthFormat(format)) {
+                    if (TextureFormatHasDepth(format)) {
                         descriptor.depthAttachment.texture = texture;
                         descriptor.depthAttachment.loadAction = MTLLoadActionClear;
                         descriptor.depthAttachment.clearDepth = 1.0;
                         descriptor.depthAttachment.storeAction = MTLStoreActionStore;
                     }
-                    if (TextureBase::IsStencilFormat(format)) {
+                    if (TextureFormatHasStencil(format)) {
                         descriptor.stencilAttachment.texture = texture;
                         descriptor.stencilAttachment.loadAction = MTLLoadActionClear;
                         descriptor.stencilAttachment.clearStencil = 0;
