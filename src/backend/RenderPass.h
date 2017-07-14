@@ -40,7 +40,7 @@ namespace backend {
                 std::bitset<kMaxColorAttachments> colorAttachmentsSet;
                 std::array<uint32_t, kMaxColorAttachments> colorAttachments;
                 bool depthStencilAttachmentSet = false;
-                uint32_t depthStencilAttachment;
+                uint32_t depthStencilAttachment = 0;
             };
 
             uint32_t GetAttachmentCount() const;
