@@ -170,7 +170,6 @@ namespace d3d12 {
         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
         rtvDesc.Texture2D.MipSlice = 0;
         rtvDesc.Texture2D.PlaneSlice = 0;
-        rtvDesc.Flags = D3D12_RTV_FLAG_NONE;
         return rtvDesc;
     }
 
@@ -179,7 +178,6 @@ namespace d3d12 {
         dsvDesc.Format = ToBackend(GetTexture())->GetD3D12Format();
         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         dsvDesc.Texture2D.MipSlice = 0;
-        dsvDesc.Texture2D.PlaneSlice = 0;
         dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
         return dsvDesc;
     }
