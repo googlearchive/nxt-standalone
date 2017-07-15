@@ -52,9 +52,11 @@ namespace d3d12 {
         }
 
         for (uint32_t attachment = 0; attachment < renderPass->GetAttachmentCount(); ++attachment) {
+            uint32_t heapIndex = attachmentHeapIndices[attachment];
             auto* textureView = GetTextureView(attachment);
             if (!textureView) {
                 // TODO(kainino@chromium.org): null=backbuffer hack
+                D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap.GetCPUHandle(heapIndex);
                 D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
                 rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
                 rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
@@ -65,7 +67,6 @@ namespace d3d12 {
             }
 
             ComPtr<ID3D12Resource> texture = ToBackend(textureView->GetTexture())->GetD3D12Resource();
-            uint32_t heapIndex = attachmentHeapIndices[attachment];
             auto format = textureView->GetTexture()->GetFormat();
             if (TextureFormatHasDepth(format) || TextureFormatHasStencil(format)) {
                 D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap.GetCPUHandle(heapIndex);
