@@ -61,7 +61,7 @@ namespace d3d12 {
                 }
             }
 
-            ASSERT(!(flags | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) ||
+            ASSERT(!(flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) ||
                     flags == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
             return flags;
         }
@@ -102,7 +102,7 @@ namespace d3d12 {
         resourceDescriptor.SampleDesc.Count = 1;
         resourceDescriptor.SampleDesc.Quality = 0;
         resourceDescriptor.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resourceDescriptor.Flags = D3D12ResourceFlags(GetUsage(), GetFormat());
+        resourceDescriptor.Flags = D3D12ResourceFlags(GetAllowedUsage(), GetFormat());
 
         resource = device->GetResourceAllocator()->Allocate(D3D12_HEAP_TYPE_DEFAULT, resourceDescriptor, D3D12TextureUsage(GetUsage(), GetFormat()));
     }
