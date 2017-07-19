@@ -29,6 +29,7 @@ namespace metal {
         ExtractSpirvInfo(*compiler);
 
         std::string msl = compiler->compile();
+        printf("%s\n", msl.c_str());
         NSString* mslSource = [NSString stringWithFormat:@"%s", msl.c_str()];
 
         auto mtlDevice = ToBackend(builder->GetDevice())->GetMTLDevice();
