@@ -75,10 +75,10 @@ namespace metal {
 
     Texture::Texture(TextureBuilder* builder, id<MTLTexture> mtlTexture)
         : TextureBase(builder), mtlTexture(mtlTexture) {
+        [mtlTexture retain];
     }
 
     Texture::~Texture() {
-        // TODO(kainino@chromium.org): Maybe don't release when using the native texture constructor?
         [mtlTexture release];
     }
 
