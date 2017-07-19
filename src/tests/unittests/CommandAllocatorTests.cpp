@@ -260,14 +260,15 @@ TEST(CommandAllocator, ManySmallCommands) {
     iterator.DataWasDestroyed();
 }
 
-//        ________
-//       /        \
-//       | POUIC! |
-//       \_ ______/
-//         v
-//    ()_()
-//    (O.o)
-//    (> <)o
+/*        ________
+ *       /        \
+ *       | POUIC! |
+ *       \_ ______/
+ *         v
+ *    ()_()
+ *    (O.o)
+ *    (> <)o
+ */
 
 // Test usage of iterator.Reset
 TEST(CommandAllocator, IteratorReset) {
