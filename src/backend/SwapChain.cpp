@@ -33,12 +33,23 @@ namespace backend {
     }
 
     void SwapChainBase::Configure(nxt::TextureFormat format, uint32_t width, uint32_t height) {
+        if (width == 0 || height == 0) {
+            device->HandleError("Swap chain cannot be configured to zero size");
+            return;
+        }
+
         this->format = format;
         this->width = width;
         this->height = height;
     }
 
     TextureBase* SwapChainBase::GetNextTexture() {
+        if (width == 0) {
+            // If width is 0, it implies swap chain has never been configured
+            device->HandleError("Swap chain needs to be configured before GetNextTexture");
+            return nullptr;
+        }
+
         auto* builder = device->CreateTextureBuilder();
         builder->SetDimension(nxt::TextureDimension::e2D);
         builder->SetExtent(width, height, 1);
@@ -55,6 +66,10 @@ namespace backend {
     void SwapChainBase::Present(TextureBase* texture) {
         if (texture != lastNextTexture) {
             device->HandleError("Tried to present something other than the last NextTexture");
+            return;
+        }
+        if (texture->GetUsage() != nxt::TextureUsageBit::Present) {
+            device->HandleError("Texture has not been transitioned to the Present usage");
             return;
         }
 

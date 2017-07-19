@@ -44,15 +44,15 @@ namespace opengl {
             }
         }
 
+        GLuint GenTexture() {
+            GLuint handle = 0;
+            glGenTextures(1, &handle);
+            return handle;
+        }
+
     }
 
     // Texture
-
-    static GLuint GenTexture() {
-        GLuint handle = 0;
-        glGenTextures(1, &handle);
-        return handle;
-    }
 
     Texture::Texture(TextureBuilder* builder)
         : Texture(builder, GenTexture()) {
