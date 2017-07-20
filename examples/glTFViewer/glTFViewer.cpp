@@ -34,14 +34,7 @@
 
 #define TINYGLTF_LOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#ifdef __GNUC__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-#endif // __GNUC__
 #include <tinygltfloader/tiny_gltf_loader.h>
-#ifdef __GNUC__
-    #pragma GCC diagnostic pop
-#endif // __GNUC__
 
 #include "GLFW/glfw3.h"
 

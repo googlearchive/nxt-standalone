@@ -100,8 +100,15 @@ else()
     list(APPEND NXT_FLAGS "-fPIC")
 
     list(APPEND NXT_INTERNAL_FLAGS "-Wall" "-Wextra")
-    list(APPEND NXT_INTERNAL_FLAGS "-pedantic" "-Wno-gnu-zero-variadic-macro-arguments")
+    list(APPEND NXT_INTERNAL_FLAGS "-pedantic")
+    list(APPEND NXT_INTERNAL_FLAGS "-Wold-style-cast")
     list(APPEND NXT_GENERATED_FLAGS "-Wno-unused-variable" "-Wno-unused-function")
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        # GCC's conversion warnings are less useful than clang's
+        list(APPEND NXT_INTERNAL_FLAGS "-Wconversion" "-Wno-sign-conversion")
+        # disable a clang-only -pedantic warning
+        list(APPEND NXT_INTERNAL_FLAGS "-Wno-gnu-zero-variadic-macro-arguments")
+    endif()
     if(NXT_USE_WERROR)
         list(APPEND NXT_INTERNAL_FLAGS "-Werror")
     endif()
