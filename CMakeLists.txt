@@ -100,7 +100,7 @@ else()
     list(APPEND NXT_FLAGS "-fPIC")
 
     list(APPEND NXT_INTERNAL_FLAGS "-Wall" "-Wextra")
-    list(APPEND NXT_INTERNAL_FLAGS "-pedantic")
+    list(APPEND NXT_INTERNAL_FLAGS "-pedantic" "-Wno-gnu-zero-variadic-macro-arguments")
     list(APPEND NXT_GENERATED_FLAGS "-Wno-unused-variable" "-Wno-unused-function")
     if(NXT_USE_WERROR)
         list(APPEND NXT_INTERNAL_FLAGS "-Werror")
