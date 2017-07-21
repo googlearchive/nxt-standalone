@@ -203,7 +203,7 @@ TEST(CommandAllocator, LargeCommands) {
 
     const int kCommandCount = 5;
 
-    int count = 0;
+    uint32_t count = 0;
     for (int i = 0; i < kCommandCount; i++) {
         CommandBig* big = allocator.Allocate<CommandBig>(CommandType::Big);
         for (int j = 0; j < kBigBufferSize; j++) {
