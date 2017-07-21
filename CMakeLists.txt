@@ -113,15 +113,12 @@ else()
         # disable a clang-only -pedantic warning
         list(APPEND NXT_INTERNAL_FLAGS "-Wno-gnu-zero-variadic-macro-arguments")
         # additional potentially useful warnings (feel free to remove if they prove un-useful)
-        list(APPEND NXT_INTERNAL_FLAGS "-Wdeprecated")
         list(APPEND NXT_INTERNAL_FLAGS "-Wextra-semi")
         list(APPEND NXT_INTERNAL_FLAGS "-Wstrict-aliasing")
         list(APPEND NXT_INTERNAL_FLAGS "-Wunreachable-code")
         list(APPEND NXT_GENERATED_FLAGS "-Wno-unreachable-code")
-        # various useful shadowing warnings
-        list(APPEND NXT_INTERNAL_FLAGS "-Wshadow-uncaptured-local" "-Wshadow-field-in-constructor-modified")
         # Probably okay to enable if we establish a field naming convention:
-        #list(APPEND NXT_INTERNAL_FLAGS "-Wshadow-all")
+        #list(APPEND NXT_INTERNAL_FLAGS "-Wshadow")
     endif()
     if(NXT_USE_WERROR)
         list(APPEND NXT_INTERNAL_FLAGS "-Werror")
