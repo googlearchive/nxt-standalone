@@ -19,6 +19,7 @@
 
 // Error message (or nullptr if there was no error)
 typedef const char* nxtSwapChainError;
+constexpr nxtSwapChainError NXT_SWAP_CHAIN_NO_ERROR = nullptr;
 
 typedef struct {
     /// Backend-specific texture id/name/pointer

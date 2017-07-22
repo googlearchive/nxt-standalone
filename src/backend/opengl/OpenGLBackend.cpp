@@ -118,33 +118,16 @@ namespace opengl {
     }
 
     void Device::HACKCLEAR() {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backFBO);
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
     }
 
     void Device::InitBackbuffer() {
-        glGenTextures(1, &backTexture);
-        glBindTexture(GL_TEXTURE_2D, backTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 640, 480, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
-        glGenFramebuffers(1, &backFBO);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, backFBO);
-        glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                GL_TEXTURE_2D, backTexture, 0);
-
-        HACKCLEAR();
     }
 
     void Device::CommitBackbuffer() {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, backFBO);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBlitFramebuffer(0, 0, 640, 480, 0, 0, 640, 480,
-                GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
 
     GLuint Device::GetCurrentTexture() {
-        return backTexture;
+        return 0;
     }
 
     // Bind Group

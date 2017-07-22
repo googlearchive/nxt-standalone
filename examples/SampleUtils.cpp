@@ -18,6 +18,7 @@
 
 #include <nxt/nxt.h>
 #include <nxt/nxtcpp.h>
+#include <nxt/nxt_wsi.h>
 #include "GLFW/glfw3.h"
 
 #include <cstring>
@@ -40,9 +41,9 @@ enum class CmdBufType {
 #elif defined(NXT_ENABLE_BACKEND_METAL)
     static utils::BackendType backendType = utils::BackendType::Metal;
 #elif defined(NXT_ENABLE_BACKEND_VULKAN)
-    static utils::BackendType backendType = utils::BackendType::OpenGL;
-#elif defined(NXT_ENABLE_BACKEND_OPENGL)
     static utils::BackendType backendType = utils::BackendType::Vulkan;
+#elif defined(NXT_ENABLE_BACKEND_OPENGL)
+    static utils::BackendType backendType = utils::BackendType::OpenGL;
 #else
     #error
 #endif
@@ -111,6 +112,10 @@ nxt::Device CreateCppNXTDevice() {
     return nxt::Device::Acquire(cDevice);
 }
 
+nxtSwapChainImplementation GetSwapChainImplementation() {
+    return binding->GetSwapChainImplementation();
+}
+
 bool InitSample(int argc, const char** argv) {
     for (int i = 0; i < argc; i++) {
         if (std::string("-b") == argv[i] || std::string("--backend") == argv[i]) {
@@ -138,7 +143,7 @@ bool InitSample(int argc, const char** argv) {
             fprintf(stderr, "--backend expects a backend name (opengl, metal, d3d12, null, vulkan)\n");
             return false;
         }
-        if (std::string("-c") == argv[i] || std::string("--comand-buffer") == argv[i]) {
+        if (std::string("-c") == argv[i] || std::string("--command-buffer") == argv[i]) {
             i++;
             if (i < argc && std::string("none") == argv[i]) {
                 cmdBufType = CmdBufType::None;
@@ -161,13 +166,12 @@ bool InitSample(int argc, const char** argv) {
     return true;
 }
 
-void DoSwapBuffers() {
+void DoFlush() {
     if (cmdBufType == CmdBufType::Terrible) {
         c2sBuf->Flush();
         s2cBuf->Flush();
     }
     glfwPollEvents();
-    binding->SwapBuffers();
 }
 
 bool ShouldQuit() {

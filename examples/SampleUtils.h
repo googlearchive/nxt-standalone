@@ -13,12 +13,14 @@
 // limitations under the License.
 
 #include <nxt/nxtcpp.h>
+#include <nxt/nxt_wsi.h>
 
 bool InitSample(int argc, const char** argv);
-void DoSwapBuffers();
+void DoFlush();
 bool ShouldQuit();
 
 struct GLFWwindow;
 struct GLFWwindow* GetGLFWWindow();
 
 nxt::Device CreateCppNXTDevice();
+nxtSwapChainImplementation GetSwapChainImplementation();
