@@ -51,7 +51,7 @@ namespace opengl {
         spirv_cross::CompilerGLSL::Options options;
 
         // TODO(cwallez@chromium.org): discover the backing context version and use that.
-#if defined(NXT_PLATFORM_APPLE)
+#if defined(NXT_PLATFORM_APPLE) || true
         options.version = 410;
 #else
         options.version = 450;

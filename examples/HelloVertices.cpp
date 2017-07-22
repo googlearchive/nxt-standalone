@@ -25,6 +25,7 @@ nxt::Buffer vertexBuffer;
 
 nxt::Queue queue;
 nxt::SwapChain swapchain;
+nxtSwapChainImplementation swapchainImpl;
 nxt::RenderPipeline pipeline;
 nxt::RenderPass renderpass;
 nxt::TextureView depthStencilView;
@@ -43,7 +44,9 @@ void init() {
 
     queue = device.CreateQueueBuilder().GetResult();
 
-    auto swapchainImpl = GetSwapChainImplementation();
+    // TODO(kainino@chromium.org): swapchainImpl lifetime has to be deceptively
+    // long. Is it possible to refcount it?
+    swapchainImpl = GetSwapChainImplementation();
     swapchain = device.CreateSwapChainBuilder()
         .SetImplementation(reinterpret_cast<uint64_t>(&swapchainImpl))
         .GetResult();

@@ -102,7 +102,7 @@ namespace backend {
 
         nxtSwapChainImplementation& impl = *reinterpret_cast<nxtSwapChainImplementation*>(implementation);
 
-        if (!impl.Init || impl.Destroy || !impl.Configure ||
+        if (!impl.Init || !impl.Destroy || !impl.Configure ||
                 !impl.GetNextTexture || !impl.Present) {
             HandleError("Implementation is incomplete");
             return;
