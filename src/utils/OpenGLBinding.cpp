@@ -17,6 +17,7 @@
 #include "common/Platform.h"
 #include "nxt/nxt_wsi.h"
 
+#include <cstdio>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
@@ -67,8 +68,12 @@ namespace utils {
                 glClear(GL_COLOR_BUFFER_BIT);
             }
 
-            void Init(nxtWSIContextGL* wsiContext) {
+            void Init(nxtWSIContextGL*) {
                 glGenTextures(1, &backTexture);
+                glBindTexture(GL_TEXTURE_2D, backTexture);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0, 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
                 glGenFramebuffers(1, &backFBO);
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, backFBO);
                 glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
@@ -91,6 +96,7 @@ namespace utils {
             }
 
             nxtSwapChainError GetNextTexture(nxtSwapChainNextTexture* nextTexture) {
+                nextTexture->texture = reinterpret_cast<void*>(backTexture);
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
 

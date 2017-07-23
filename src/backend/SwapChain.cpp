@@ -26,6 +26,8 @@ namespace backend {
     }
 
     SwapChainBase::~SwapChainBase() {
+        const auto& im = GetImplementation();
+        im.Destroy(im.userData);
     }
 
     DeviceBase* SwapChainBase::GetDevice() {
