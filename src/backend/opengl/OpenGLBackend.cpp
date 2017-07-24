@@ -30,11 +30,6 @@ namespace opengl {
     nxtProcTable GetNonValidatingProcs();
     nxtProcTable GetValidatingProcs();
 
-    void HACKCLEAR(nxtDevice device) {
-        Device* backendDevice = reinterpret_cast<Device*>(device);
-        backendDevice->HACKCLEAR();
-    }
-
     void Init(void* (*getProc)(const char*), nxtProcTable* procs, nxtDevice* device) {
         *device = nullptr;
 
@@ -44,17 +39,6 @@ namespace opengl {
         *device = reinterpret_cast<nxtDevice>(new Device);
 
         glEnable(GL_DEPTH_TEST);
-        HACKCLEAR(*device);
-    }
-
-    void InitBackbuffer(nxtDevice device) {
-        Device* backendDevice = reinterpret_cast<Device*>(device);
-        backendDevice->InitBackbuffer();
-    }
-
-    void CommitBackbuffer(nxtDevice device) {
-        Device* backendDevice = reinterpret_cast<Device*>(device);
-        backendDevice->CommitBackbuffer();
     }
 
     // Device
@@ -115,19 +99,6 @@ namespace opengl {
     }
 
     void Device::TickImpl() {
-    }
-
-    void Device::HACKCLEAR() {
-    }
-
-    void Device::InitBackbuffer() {
-    }
-
-    void Device::CommitBackbuffer() {
-    }
-
-    GLuint Device::GetCurrentTexture() {
-        return 0;
     }
 
     // Bind Group

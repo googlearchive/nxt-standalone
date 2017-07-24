@@ -24,15 +24,12 @@
 namespace backend {
     namespace opengl {
         void Init(void* (*getProc)(const char*), nxtProcTable* procs, nxtDevice* device);
-        void HACKCLEAR(nxtDevice device);
-        void InitBackbuffer(nxtDevice device);
-        void CommitBackbuffer(nxtDevice device);
     }
 }
 
 namespace utils {
     // TODO(kainino@chromium.org): probably make this reference counted
-    class SwapChainGL {
+    class SwapChainImplGL {
         public:
             static nxtSwapChainImplementation Create(GLFWwindow* window) {
                 nxtSwapChainImplementation impl = {};
@@ -41,7 +38,7 @@ namespace utils {
                 impl.Configure = Configure;
                 impl.GetNextTexture = GetNextTexture;
                 impl.Present = Present;
-                impl.userData = new SwapChainGL(window);
+                impl.userData = new SwapChainImplGL(window);
                 return impl;
             }
 
@@ -52,11 +49,11 @@ namespace utils {
             GLuint backFBO = 0;
             GLuint backTexture = 0;
 
-            SwapChainGL(GLFWwindow* window)
+            SwapChainImplGL(GLFWwindow* window)
                 : window(window) {
             }
 
-            ~SwapChainGL() {
+            ~SwapChainImplGL() {
                 glDeleteTextures(1, &backTexture);
                 glDeleteFramebuffers(1, &backFBO);
             }
@@ -88,8 +85,11 @@ namespace utils {
                 cfgHeight = height;
 
                 glBindTexture(GL_TEXTURE_2D, backTexture);
+                // Reallocate the texture
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
                         GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                // Clear the newly (re-)allocated texture
+                HACKCLEAR();
 
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
@@ -114,25 +114,25 @@ namespace utils {
 
             static void Init(void* userData, void* wsiContext) {
                 auto* ctx = reinterpret_cast<nxtWSIContextGL*>(wsiContext);
-                reinterpret_cast<SwapChainGL*>(userData)->Init(ctx);
+                reinterpret_cast<SwapChainImplGL*>(userData)->Init(ctx);
             }
 
             static void Destroy(void* userData) {
-                delete reinterpret_cast<SwapChainGL*>(userData);
+                delete reinterpret_cast<SwapChainImplGL*>(userData);
             }
 
             static nxtSwapChainError Configure(void* userData, nxtTextureFormat format, uint32_t width, uint32_t height) {
-                return reinterpret_cast<SwapChainGL*>(userData)->Configure(
+                return reinterpret_cast<SwapChainImplGL*>(userData)->Configure(
                         format, width, height);
             }
 
             static nxtSwapChainError GetNextTexture(void* userData, nxtSwapChainNextTexture* nextTexture) {
-                return reinterpret_cast<SwapChainGL*>(userData)->GetNextTexture(
+                return reinterpret_cast<SwapChainImplGL*>(userData)->GetNextTexture(
                         nextTexture);
             }
 
             static nxtSwapChainError Present(void* userData) {
-                return reinterpret_cast<SwapChainGL*>(userData)->Present();
+                return reinterpret_cast<SwapChainImplGL*>(userData)->Present();
             }
     };
 
@@ -156,14 +156,10 @@ namespace utils {
                 backend::opengl::Init(reinterpret_cast<void*(*)(const char*)>(glfwGetProcAddress), procs, device);
 
                 backendDevice = *device;
-                backend::opengl::InitBackbuffer(backendDevice);
-            }
-
-            void SwapBuffers() override {
             }
 
             nxtSwapChainImplementation GetSwapChainImplementation() override {
-                return SwapChainGL::Create(window);
+                return SwapChainImplGL::Create(window);
             }
 
         private:
