@@ -110,6 +110,8 @@ namespace utils {
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
 
+            // C stubs for C++ methods
+
             static void Init(void* userData, void* wsiContext) {
                 auto* ctx = reinterpret_cast<nxtWSIContextGL*>(wsiContext);
                 reinterpret_cast<SwapChainGL*>(userData)->Init(ctx);
@@ -137,8 +139,7 @@ namespace utils {
     class OpenGLBinding : public BackendBinding {
         public:
             void SetupGLFWWindowHints() override {
-                //#if defined(NXT_PLATFORM_APPLE)
-                #if 1
+                #if defined(NXT_PLATFORM_APPLE)
                     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
                     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
                     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);

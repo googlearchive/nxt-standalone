@@ -43,6 +43,8 @@ namespace backend {
         this->format = format;
         this->width = width;
         this->height = height;
+        implementation.Configure(implementation.userData,
+                static_cast<nxtTextureFormat>(format), width, height);
     }
 
     TextureBase* SwapChainBase::GetNextTexture() {
