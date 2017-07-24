@@ -31,6 +31,10 @@ namespace utils {
             }
             void SwapBuffers() override {
             }
+            nxtSwapChainImplementation GetSwapChainImplementation() override {
+                nxtSwapChainImplementation impl = {};
+                return impl;
+            }
     };
 
 

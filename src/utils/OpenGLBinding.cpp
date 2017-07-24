@@ -46,7 +46,6 @@ namespace utils {
             }
 
         private:
-            nxtDevice backendDevice = nullptr;
             GLFWwindow* window = nullptr;
             uint32_t cfgWidth = 0;
             uint32_t cfgHeight = 0;
@@ -159,10 +158,10 @@ namespace utils {
                 backend::opengl::InitBackbuffer(backendDevice);
             }
 
-            void SwapBuffers() {
+            void SwapBuffers() override {
             }
 
-            nxtSwapChainImplementation GetSwapChainImplementation() {
+            nxtSwapChainImplementation GetSwapChainImplementation() override {
                 return SwapChainGL::Create(window);
             }
 
