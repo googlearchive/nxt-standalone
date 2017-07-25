@@ -52,8 +52,10 @@ typedef struct {
 } nxtWSIContextD3D12;
 #endif
 
-#ifdef NXT_ENABLE_BACKEND_METAL
+#if defined(NXT_ENABLE_BACKEND_METAL) && defined(__OBJC__)
+#import <Metal/Metal.h>
 typedef struct {
+    id<MTLDevice> device = nil;
 } nxtWSIContextMetal;
 #endif
 

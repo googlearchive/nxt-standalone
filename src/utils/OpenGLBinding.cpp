@@ -28,6 +28,7 @@ namespace backend {
 }
 
 namespace utils {
+
     // TODO(kainino@chromium.org): probably make this reference counted
     class SwapChainImplGL {
         public:

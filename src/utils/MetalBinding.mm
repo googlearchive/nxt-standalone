@@ -31,6 +31,130 @@ namespace metal {
 
 namespace utils {
 
+    // TODO(kainino@chromium.org): probably make this reference counted
+    class SwapChainImplMTL {
+        public:
+            static nxtSwapChainImplementation Create(GLFWwindow* window) {
+                nxtSwapChainImplementation impl = {};
+                impl.Init = Init;
+                impl.Destroy = Destroy;
+                impl.Configure = Configure;
+                impl.GetNextTexture = GetNextTexture;
+                impl.Present = Present;
+                impl.userData = new SwapChainImplMTL(window);
+                return impl;
+            }
+
+        private:
+            id nsWindow = nil;
+            id<MTLDevice> mtlDevice = nil;
+            id<MTLCommandQueue> commandQueue = nil;
+
+            CAMetalLayer* layer = nullptr;
+            id<CAMetalDrawable> currentDrawable = nil;
+            id<MTLTexture> currentTexture = nil;
+
+            SwapChainImplMTL(GLFWwindow* window)
+                : nsWindow(glfwGetCocoaWindow(window)) {
+            }
+
+            ~SwapChainImplMTL() {
+                [currentTexture release];
+                [currentDrawable release];
+            }
+
+            void Init(nxtWSIContextMetal* ctx) {
+                mtlDevice = ctx->device;
+                commandQueue = [mtlDevice newCommandQueue];
+            }
+
+            nxtSwapChainError Configure(nxtTextureFormat format,
+                    uint32_t width, uint32_t height) {
+                if (format != NXT_TEXTURE_FORMAT_R8_G8_B8_A8_UNORM) {
+                    return "unsupported format";
+                }
+
+                NSView* contentView = [nsWindow contentView];
+                [contentView setWantsLayer: YES];
+
+                CGSize size = {};
+                size.width = width;
+                size.height = height;
+
+                layer = [CAMetalLayer layer];
+                [layer setDevice: mtlDevice];
+                [layer setPixelFormat: MTLPixelFormatBGRA8Unorm];
+                [layer setFramebufferOnly: YES];
+                [layer setDrawableSize: size];
+
+                [contentView setLayer: layer];
+
+                return NXT_SWAP_CHAIN_NO_ERROR;
+            }
+
+            nxtSwapChainError GetNextTexture(nxtSwapChainNextTexture* nextTexture) {
+                [currentDrawable release];
+                currentDrawable = [layer nextDrawable];
+                [currentDrawable retain];
+
+                [currentTexture release];
+                currentTexture = currentDrawable.texture;
+                [currentTexture retain];
+
+                // Clear initial contents of the texture
+                {
+                    MTLRenderPassDescriptor* passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+                    passDescriptor.colorAttachments[0].texture = currentTexture;
+                    passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+                    passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+                    passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
+
+                    id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+                    id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer
+                        renderCommandEncoderWithDescriptor:passDescriptor];
+                    [commandEncoder endEncoding];
+                    [commandBuffer commit];
+                }
+
+                nextTexture->texture = reinterpret_cast<void*>(currentTexture);
+
+                return NXT_SWAP_CHAIN_NO_ERROR;
+            }
+
+            nxtSwapChainError Present() {
+                id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+                [commandBuffer presentDrawable: currentDrawable];
+                [commandBuffer commit];
+
+                return NXT_SWAP_CHAIN_NO_ERROR;
+            }
+
+            // C stubs for C++ methods
+
+            static void Init(void* userData, void* wsiContext) {
+                auto* ctx = reinterpret_cast<nxtWSIContextMetal*>(wsiContext);
+                reinterpret_cast<SwapChainImplMTL*>(userData)->Init(ctx);
+            }
+
+            static void Destroy(void* userData) {
+                delete reinterpret_cast<SwapChainImplMTL*>(userData);
+            }
+
+            static nxtSwapChainError Configure(void* userData, nxtTextureFormat format, uint32_t width, uint32_t height) {
+                return reinterpret_cast<SwapChainImplMTL*>(userData)->Configure(
+                        format, width, height);
+            }
+
+            static nxtSwapChainError GetNextTexture(void* userData, nxtSwapChainNextTexture* nextTexture) {
+                return reinterpret_cast<SwapChainImplMTL*>(userData)->GetNextTexture(
+                        nextTexture);
+            }
+
+            static nxtSwapChainError Present(void* userData) {
+                return reinterpret_cast<SwapChainImplMTL*>(userData)->Present();
+            }
+    };
+
     class MetalBinding : public BackendBinding {
         public:
             void SetupGLFWWindowHints() override {
@@ -39,39 +163,16 @@ namespace utils {
             void GetProcAndDevice(nxtProcTable* procs, nxtDevice* device) override {
                 metalDevice = MTLCreateSystemDefaultDevice();
 
-                id nsWindow = glfwGetCocoaWindow(window);
-                NSView* contentView = [nsWindow contentView];
-                [contentView setWantsLayer: YES];
-
-                layer = [CAMetalLayer layer];
-                [layer setDevice: metalDevice];
-                [layer setPixelFormat: MTLPixelFormatBGRA8Unorm];
-                [layer setFramebufferOnly: YES];
-                [layer setDrawableSize: [contentView bounds].size];
-
-                [contentView setLayer: layer];
-
                 backend::metal::Init(metalDevice, procs, device);
                 backendDevice = *device;
-
-                backend::metal::SetNextDrawable(backendDevice, GetNextDrawable());
             }
-            void SwapBuffers() override {
-                backend::metal::Present(backendDevice);
-                backend::metal::SetNextDrawable(backendDevice, GetNextDrawable());
+
+            nxtSwapChainImplementation GetSwapChainImplementation() override {
+                return SwapChainImplMTL::Create(window);
             }
 
         private:
-            id<CAMetalDrawable> GetNextDrawable() {
-                lastDrawable = [layer nextDrawable];
-                return lastDrawable;
-            }
-
             id<MTLDevice> metalDevice = nil;
-            CAMetalLayer* layer = nullptr;
-
-            id<CAMetalDrawable> lastDrawable = nil;
-
             nxtDevice backendDevice = nullptr;
     };
 
