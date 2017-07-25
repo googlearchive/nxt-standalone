@@ -23,4 +23,5 @@ struct GLFWwindow;
 struct GLFWwindow* GetGLFWWindow();
 
 nxt::Device CreateCppNXTDevice();
-nxtSwapChainImplementation GetSwapChainImplementation();
+uint64_t GetSwapChainImplementation();
+nxt::SwapChain GetSwapChain(const nxt::Device& device);

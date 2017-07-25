@@ -217,10 +217,6 @@ void NXTTest::WaitABit() {
     utils::USleep(100);
 }
 
-void NXTTest::SwapBuffers() {
-    binding->SwapBuffers();
-}
-
 NXTTest::ReadbackReservation NXTTest::ReserveReadback(uint32_t readbackSize) {
     // For now create a new MapRead buffer for each readback
     // TODO(cwallez@chromium.org): eventually make bigger buffers and allocate linearly?

@@ -112,8 +112,17 @@ nxt::Device CreateCppNXTDevice() {
     return nxt::Device::Acquire(cDevice);
 }
 
-nxtSwapChainImplementation GetSwapChainImplementation() {
-    return binding->GetSwapChainImplementation();
+uint64_t GetSwapChainImplementation() {
+    static nxtSwapChainImplementation swapchainImpl = binding->GetSwapChainImplementation();
+    // TODO(kainino@chromium.org): swapchainImpl lifetime has to be deceptively
+    // long. It's probably possible to refcount it?
+    return reinterpret_cast<uint64_t>(&swapchainImpl);
+}
+
+nxt::SwapChain GetSwapChain(const nxt::Device &device) {
+    return device.CreateSwapChainBuilder()
+        .SetImplementation(GetSwapChainImplementation())
+        .GetResult();
 }
 
 bool InitSample(int argc, const char** argv) {
