@@ -25,9 +25,9 @@ nxt::Buffer vertexBuffer;
 
 nxt::Queue queue;
 nxt::SwapChain swapchain;
+nxt::TextureView depthStencilView;
 nxt::RenderPipeline pipeline;
 nxt::RenderPass renderpass;
-nxt::TextureView depthStencilView;
 
 void initBuffers() {
     static const float vertexData[12] = {
@@ -69,14 +69,14 @@ void init() {
         .GetResult();
 
     renderpass = utils::CreateDefaultRenderPass(device);
+    depthStencilView = utils::CreateDefaultDepthStencilView(device);
+
     pipeline = device.CreateRenderPipelineBuilder()
         .SetSubpass(renderpass, 0)
         .SetStage(nxt::ShaderStage::Vertex, vsModule, "main")
         .SetStage(nxt::ShaderStage::Fragment, fsModule, "main")
         .SetInputState(inputState)
         .GetResult();
-
-    depthStencilView = utils::CreateDefaultDepthStencilView(device);
 }
 
 void frame() {
