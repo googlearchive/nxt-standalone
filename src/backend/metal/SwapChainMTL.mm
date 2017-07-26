@@ -35,9 +35,14 @@ namespace metal {
 
     TextureBase* SwapChain::GetNextTextureImpl(TextureBuilder* builder) {
         const auto& im = GetImplementation();
-        nxtSwapChainNextTexture nextTexture = {};
-        im.GetNextTexture(im.userData, &nextTexture);
-        id<MTLTexture> nativeTexture = reinterpret_cast<id<MTLTexture>>(nextTexture.texture);
+        nxtSwapChainNextTexture next = {};
+        nxtSwapChainError error = im.GetNextTexture(im.userData, &next);
+        if (error) {
+            GetDevice()->HandleError(error);
+            return nullptr;
+        }
+
+        id<MTLTexture> nativeTexture = reinterpret_cast<id<MTLTexture>>(next.texture);
         return new Texture(builder, nativeTexture);
     }
 

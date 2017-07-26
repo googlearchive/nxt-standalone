@@ -14,6 +14,9 @@
 
 #include "utils/BackendBinding.h"
 
+#include "common/Assert.h"
+#include "nxt/nxt_wsi.h"
+
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
@@ -30,7 +33,6 @@ namespace metal {
 }
 
 namespace utils {
-
     // TODO(kainino@chromium.org): probably make this reference counted
     class SwapChainImplMTL {
         public:
@@ -73,6 +75,8 @@ namespace utils {
                 if (format != NXT_TEXTURE_FORMAT_R8_G8_B8_A8_UNORM) {
                     return "unsupported format";
                 }
+                ASSERT(width > 0);
+                ASSERT(height > 0);
 
                 NSView* contentView = [nsWindow contentView];
                 [contentView setWantsLayer: YES];

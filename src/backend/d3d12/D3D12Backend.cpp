@@ -51,11 +51,6 @@ namespace d3d12 {
         return backendDevice->GetCommandQueue();
     }
 
-    void SetNextTexture(nxtDevice device, ComPtr<ID3D12Resource> resource) {
-        Device* backendDevice = reinterpret_cast<Device*>(device);
-        backendDevice->SetNextTexture(resource);
-    }
-
     uint64_t GetSerial(const nxtDevice device) {
         const Device* backendDevice = reinterpret_cast<const Device*>(device);
         return backendDevice->GetSerial();
@@ -157,15 +152,6 @@ namespace d3d12 {
         }
         return pendingCommands.commandList;
     }
-
-    ComPtr<ID3D12Resource> Device::GetCurrentTexture() {
-        return nextTexture;
-    }
-
-    void Device::SetNextTexture(ComPtr<ID3D12Resource> resource) {
-        nextTexture = resource;
-    }
-
 
     void Device::TickImpl() {
         // Perform cleanup operations to free unused objects

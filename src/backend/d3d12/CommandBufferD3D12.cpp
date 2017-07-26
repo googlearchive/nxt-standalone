@@ -218,7 +218,7 @@ namespace d3d12 {
 
         D3D12_TEXTURE_COPY_LOCATION D3D12TextureCopyLocation(TextureCopyLocation& textureLocation) {
             D3D12_TEXTURE_COPY_LOCATION d3d12Location;
-            d3d12Location.pResource = ToBackend(textureLocation.texture.Get())->GetD3D12Resource().Get();
+            d3d12Location.pResource = ToBackend(textureLocation.texture.Get())->GetD3D12Resource();
             d3d12Location.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
             d3d12Location.SubresourceIndex = textureLocation.level;
             return d3d12Location;

@@ -14,6 +14,7 @@
 
 #include "utils/BackendBinding.h"
 
+#include "common/Assert.h"
 #include "common/Platform.h"
 #include "nxt/nxt_wsi.h"
 
@@ -28,7 +29,6 @@ namespace backend {
 }
 
 namespace utils {
-
     // TODO(kainino@chromium.org): probably make this reference counted
     class SwapChainImplGL {
         public:
@@ -82,6 +82,8 @@ namespace utils {
                 if (format != NXT_TEXTURE_FORMAT_R8_G8_B8_A8_UNORM) {
                     return "unsupported format";
                 }
+                ASSERT(width > 0);
+                ASSERT(height > 0);
                 cfgWidth = width;
                 cfgHeight = height;
 
@@ -96,7 +98,7 @@ namespace utils {
             }
 
             nxtSwapChainError GetNextTexture(nxtSwapChainNextTexture* nextTexture) {
-                nextTexture->texture = reinterpret_cast<void*>(backTexture);
+                nextTexture->texture = reinterpret_cast<void*>(static_cast<size_t>(backTexture));
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
 
