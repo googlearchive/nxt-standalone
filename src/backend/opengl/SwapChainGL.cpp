@@ -39,7 +39,7 @@ namespace opengl {
             GetDevice()->HandleError(error);
             return nullptr;
         }
-        GLuint nativeTexture = static_cast<GLuint>(reinterpret_cast<size_t>(next.texture));
+        GLuint nativeTexture = static_cast<GLuint>(reinterpret_cast<uintptr_t>(next.texture));
         return new Texture(builder, nativeTexture);
     }
 

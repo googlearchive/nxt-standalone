@@ -171,16 +171,16 @@ namespace utils {
             }
 
             uint64_t GetSwapChainImplementation() override {
-				if (swapchainImpl.userData == nullptr) {
-					swapchainImpl = SwapChainImplMTL::Create(glfwGetCocoaWindow(window));
-				}
-				return reinterpret_cast<uint64_t>(&swapchainImpl);
+                if (swapchainImpl.userData == nullptr) {
+                    swapchainImpl = SwapChainImplMTL::Create(glfwGetCocoaWindow(window));
+                }
+                return reinterpret_cast<uint64_t>(&swapchainImpl);
             }
 
         private:
             id<MTLDevice> metalDevice = nil;
             nxtDevice backendDevice = nullptr;
-			nxtSwapChainImplementation swapchainImpl = {};
+            nxtSwapChainImplementation swapchainImpl = {};
     };
 
     BackendBinding* CreateMetalBinding() {

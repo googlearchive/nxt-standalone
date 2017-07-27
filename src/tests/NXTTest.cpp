@@ -137,6 +137,10 @@ void NXTTest::SetUp() {
     device = nxt::Device::Acquire(backendDevice);
     queue = device.CreateQueueBuilder().GetResult();
 
+    swapchain = device.CreateSwapChainBuilder()
+        .SetImplementation(binding->GetSwapChainImplementation())
+        .GetResult();
+
     device.SetErrorCallback(DeviceErrorCauseTestFailure, 0);
 }
 
@@ -215,6 +219,13 @@ std::ostringstream& NXTTest::AddTextureExpectation(const char* file, int line, c
 void NXTTest::WaitABit() {
     device.Tick();
     utils::USleep(100);
+}
+
+void NXTTest::SwapBuffersForCapture() {
+    // Insert a frame boundary for API capture tools.
+    nxt::Texture backBuffer = swapchain.GetNextTexture();
+    backBuffer.TransitionUsage(nxt::TextureUsageBit::Present);
+    swapchain.Present(backBuffer);
 }
 
 NXTTest::ReadbackReservation NXTTest::ReserveReadback(uint32_t readbackSize) {

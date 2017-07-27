@@ -80,19 +80,20 @@ namespace utils {
 
     class SwapChainImplD3D12 {
         public:
-            static nxtSwapChainImplementation Create(HWND window) {
+            static nxtSwapChainImplementation Create(HWND window, const nxtProcTable& procs) {
                 nxtSwapChainImplementation impl = {};
                 impl.Init = Init;
                 impl.Destroy = Destroy;
                 impl.Configure = Configure;
                 impl.GetNextTexture = GetNextTexture;
                 impl.Present = Present;
-                impl.userData = new SwapChainImplD3D12(window);
+                impl.userData = new SwapChainImplD3D12(window, procs);
                 return impl;
             }
 
         private:
             nxtDevice backendDevice = nullptr;
+            nxtProcTable procs = {};
 
             static constexpr unsigned int kFrameCount = 2;
 
@@ -107,8 +108,8 @@ namespace utils {
             uint32_t previousRenderTargetIndex = 0;
             uint64_t lastSerialRenderTargetWasUsed[kFrameCount] = {};
 
-            SwapChainImplD3D12(HWND window)
-                : window(window), factory(CreateFactory()) {
+            SwapChainImplD3D12(HWND window, nxtProcTable procs)
+                : window(window), procs(procs), factory(CreateFactory()) {
             }
 
             ~SwapChainImplD3D12() {
@@ -171,21 +172,9 @@ namespace utils {
             }
 
             nxtSwapChainError Present() {
-                // Transition current frame's render target for presenting
-                {
-                    ComPtr<ID3D12GraphicsCommandList> commandList = {};
-                    backend::d3d12::OpenCommandList(backendDevice, &commandList);
-                    D3D12_RESOURCE_BARRIER resourceBarrier;
-                    resourceBarrier.Transition.pResource = renderTargetResources[renderTargetIndex].Get();
-                    resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-                    resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-                    resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-                    resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-                    resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                    commandList->ResourceBarrier(1, &resourceBarrier);
-                    ASSERT_SUCCESS(commandList->Close());
-                    backend::d3d12::ExecuteCommandLists(backendDevice, { commandList.Get() });
-                }
+                // Current frame already transitioned to Present by the application, but
+                // we need to flush the D3D12 backend's pending transitions.
+                procs.deviceTick(backendDevice);
 
                 ASSERT_SUCCESS(swapChain->Present(1, 0));
 
@@ -264,12 +253,13 @@ namespace utils {
 
                 backend::d3d12::Init(d3d12Device, procs, device);
                 backendDevice = *device;
+                procTable = *procs;
             }
 
             uint64_t GetSwapChainImplementation() override {
                 if (swapchainImpl.userData == nullptr) {
                     HWND win32Window = glfwGetWin32Window(window);
-                    swapchainImpl = SwapChainImplD3D12::Create(win32Window);
+                    swapchainImpl = SwapChainImplD3D12::Create(win32Window, procTable);
                 }
                 return reinterpret_cast<uint64_t>(&swapchainImpl);
             }
@@ -277,6 +267,7 @@ namespace utils {
         private:
             nxtDevice backendDevice = nullptr;
             nxtSwapChainImplementation swapchainImpl = {};
+            nxtProcTable procTable = {};
 
             // Initialization
             ComPtr<IDXGIFactory4> factory;

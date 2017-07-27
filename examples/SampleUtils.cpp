@@ -40,10 +40,10 @@ enum class CmdBufType {
     static utils::BackendType backendType = utils::BackendType::D3D12;
 #elif defined(NXT_ENABLE_BACKEND_METAL)
     static utils::BackendType backendType = utils::BackendType::Metal;
-#elif defined(NXT_ENABLE_BACKEND_VULKAN)
-    static utils::BackendType backendType = utils::BackendType::Vulkan;
 #elif defined(NXT_ENABLE_BACKEND_OPENGL)
     static utils::BackendType backendType = utils::BackendType::OpenGL;
+#elif defined(NXT_ENABLE_BACKEND_VULKAN)
+    static utils::BackendType backendType = utils::BackendType::Vulkan;
 #else
     #error
 #endif
