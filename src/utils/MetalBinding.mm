@@ -36,13 +36,8 @@ namespace utils {
     class SwapChainImplMTL {
         public:
             static nxtSwapChainImplementation Create(id nswindow) {
-                nxtSwapChainImplementation impl = {};
-                impl.Init = Init;
-                impl.Destroy = Destroy;
-                impl.Configure = Configure;
-                impl.GetNextTexture = GetNextTexture;
-                impl.Present = Present;
-                impl.userData = new SwapChainImplMTL(nswindow);
+                auto impl = GenerateSwapChainImplementation<SwapChainImplMTL, nxtWSIContextMetal>();
+                impl.userData = new SwapChainImplD3D12(window, procs);
                 return impl;
             }
 
@@ -63,6 +58,9 @@ namespace utils {
                 [currentTexture release];
                 [currentDrawable release];
             }
+
+            // For GenerateSwapChainImplementation
+            friend class SwapChainImpl;
 
             void Init(nxtWSIContextMetal* ctx) {
                 mtlDevice = ctx->device;
@@ -130,31 +128,6 @@ namespace utils {
                 [commandBuffer commit];
 
                 return NXT_SWAP_CHAIN_NO_ERROR;
-            }
-
-            // C stubs for C++ methods
-
-            static void Init(void* userData, void* wsiContext) {
-                auto* ctx = reinterpret_cast<nxtWSIContextMetal*>(wsiContext);
-                reinterpret_cast<SwapChainImplMTL*>(userData)->Init(ctx);
-            }
-
-            static void Destroy(void* userData) {
-                delete reinterpret_cast<SwapChainImplMTL*>(userData);
-            }
-
-            static nxtSwapChainError Configure(void* userData, nxtTextureFormat format, uint32_t width, uint32_t height) {
-                return reinterpret_cast<SwapChainImplMTL*>(userData)->Configure(
-                        format, width, height);
-            }
-
-            static nxtSwapChainError GetNextTexture(void* userData, nxtSwapChainNextTexture* nextTexture) {
-                return reinterpret_cast<SwapChainImplMTL*>(userData)->GetNextTexture(
-                        nextTexture);
-            }
-
-            static nxtSwapChainError Present(void* userData) {
-                return reinterpret_cast<SwapChainImplMTL*>(userData)->Present();
             }
     };
 

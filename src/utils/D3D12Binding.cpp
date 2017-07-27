@@ -78,15 +78,10 @@ namespace utils {
         }
     }
 
-    class SwapChainImplD3D12 {
+    class SwapChainImplD3D12 : SwapChainImpl {
         public:
             static nxtSwapChainImplementation Create(HWND window, const nxtProcTable& procs) {
-                nxtSwapChainImplementation impl = {};
-                impl.Init = Init;
-                impl.Destroy = Destroy;
-                impl.Configure = Configure;
-                impl.GetNextTexture = GetNextTexture;
-                impl.Present = Present;
+                auto impl = GenerateSwapChainImplementation<SwapChainImplD3D12, nxtWSIContextD3D12>();
                 impl.userData = new SwapChainImplD3D12(window, procs);
                 return impl;
             }
@@ -114,6 +109,9 @@ namespace utils {
 
             ~SwapChainImplD3D12() {
             }
+
+            // For GenerateSwapChainImplementation
+            friend class SwapChainImpl;
 
             void Init(nxtWSIContextD3D12* ctx) {
                 backendDevice = ctx->device;
@@ -208,31 +206,6 @@ namespace utils {
                 lastSerialRenderTargetWasUsed[renderTargetIndex] = backend::d3d12::GetSerial(backendDevice);
 
                 return NXT_SWAP_CHAIN_NO_ERROR;
-            }
-
-            // C stubs for C++ methods
-
-            static void Init(void* userData, void* wsiContext) {
-                auto* ctx = reinterpret_cast<nxtWSIContextD3D12*>(wsiContext);
-                reinterpret_cast<SwapChainImplD3D12*>(userData)->Init(ctx);
-            }
-
-            static void Destroy(void* userData) {
-                delete reinterpret_cast<SwapChainImplD3D12*>(userData);
-            }
-
-            static nxtSwapChainError Configure(void* userData, nxtTextureFormat format, uint32_t width, uint32_t height) {
-                return reinterpret_cast<SwapChainImplD3D12*>(userData)->Configure(
-                        format, width, height);
-            }
-
-            static nxtSwapChainError GetNextTexture(void* userData, nxtSwapChainNextTexture* nextTexture) {
-                return reinterpret_cast<SwapChainImplD3D12*>(userData)->GetNextTexture(
-                        nextTexture);
-            }
-
-            static nxtSwapChainError Present(void* userData) {
-                return reinterpret_cast<SwapChainImplD3D12*>(userData)->Present();
             }
     };
 

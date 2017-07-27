@@ -32,13 +32,8 @@ namespace utils {
     class SwapChainImplGL {
         public:
             static nxtSwapChainImplementation Create(GLFWwindow* window) {
-                nxtSwapChainImplementation impl = {};
-                impl.Init = Init;
-                impl.Destroy = Destroy;
-                impl.Configure = Configure;
-                impl.GetNextTexture = GetNextTexture;
-                impl.Present = Present;
-                impl.userData = new SwapChainImplGL(window);
+                auto impl = GenerateSwapChainImplementation<SwapChainImplGL, nxtWSIContextGL>();
+                impl.userData = new SwapChainImplD3D12(window);
                 return impl;
             }
 
@@ -63,6 +58,9 @@ namespace utils {
                 glClearColor(0, 0, 0, 1);
                 glClear(GL_COLOR_BUFFER_BIT);
             }
+
+            // For GenerateSwapChainImplementation
+            friend class SwapChainImpl;
 
             void Init(nxtWSIContextGL*) {
                 glGenTextures(1, &backTexture);
@@ -110,31 +108,6 @@ namespace utils {
                 HACKCLEAR();
 
                 return NXT_SWAP_CHAIN_NO_ERROR;
-            }
-
-            // C stubs for C++ methods
-
-            static void Init(void* userData, void* wsiContext) {
-                auto* ctx = reinterpret_cast<nxtWSIContextGL*>(wsiContext);
-                reinterpret_cast<SwapChainImplGL*>(userData)->Init(ctx);
-            }
-
-            static void Destroy(void* userData) {
-                delete reinterpret_cast<SwapChainImplGL*>(userData);
-            }
-
-            static nxtSwapChainError Configure(void* userData, nxtTextureFormat format, uint32_t width, uint32_t height) {
-                return reinterpret_cast<SwapChainImplGL*>(userData)->Configure(
-                        format, width, height);
-            }
-
-            static nxtSwapChainError GetNextTexture(void* userData, nxtSwapChainNextTexture* nextTexture) {
-                return reinterpret_cast<SwapChainImplGL*>(userData)->GetNextTexture(
-                        nextTexture);
-            }
-
-            static nxtSwapChainError Present(void* userData) {
-                return reinterpret_cast<SwapChainImplGL*>(userData)->Present();
             }
     };
 
