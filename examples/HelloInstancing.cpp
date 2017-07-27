@@ -80,8 +80,8 @@ void init() {
         .SetInput(1, 2 * sizeof(float), nxt::InputStepMode::Instance)
         .GetResult();
 
-    renderpass = utils::CreateDefaultRenderPass(device);
-    depthStencilView = utils::CreateDefaultDepthStencilView(device);
+    renderpass = CreateDefaultRenderPass(device);
+    depthStencilView = CreateDefaultDepthStencilView(device);
 
     pipeline = device.CreateRenderPipelineBuilder()
         .SetSubpass(renderpass, 0)
@@ -94,7 +94,7 @@ void init() {
 void frame() {
     nxt::Texture backbuffer;
     nxt::Framebuffer framebuffer;
-    utils::GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &framebuffer);
+    GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &framebuffer);
 
     static const uint32_t vertexBufferOffsets[1] = {0};
     nxt::CommandBuffer commands = device.CreateCommandBufferBuilder()

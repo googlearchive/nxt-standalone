@@ -25,3 +25,11 @@ struct GLFWwindow* GetGLFWWindow();
 nxt::Device CreateCppNXTDevice();
 uint64_t GetSwapChainImplementation();
 nxt::SwapChain GetSwapChain(const nxt::Device& device);
+nxt::RenderPass CreateDefaultRenderPass(const nxt::Device& device);
+nxt::TextureView CreateDefaultDepthStencilView(const nxt::Device& device);
+void GetNextFramebuffer(const nxt::Device& device,
+    const nxt::RenderPass& renderPass,
+    const nxt::SwapChain& swapchain,
+    const nxt::TextureView& depthStencilView,
+    nxt::Texture* backbuffer,
+    nxt::Framebuffer* framebuffer);

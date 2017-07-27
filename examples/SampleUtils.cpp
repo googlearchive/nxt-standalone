@@ -122,6 +122,46 @@ nxt::SwapChain GetSwapChain(const nxt::Device &device) {
         .GetResult();
 }
 
+nxt::RenderPass CreateDefaultRenderPass(const nxt::Device& device) {
+    return device.CreateRenderPassBuilder()
+        .SetAttachmentCount(2)
+        .AttachmentSetFormat(0, nxt::TextureFormat::R8G8B8A8Unorm)
+        .AttachmentSetFormat(1, nxt::TextureFormat::D32FloatS8Uint)
+        .SetSubpassCount(1)
+        .SubpassSetColorAttachment(0, 0, 0)
+        .SubpassSetDepthStencilAttachment(0, 1)
+        .GetResult();
+}
+
+nxt::TextureView CreateDefaultDepthStencilView(const nxt::Device& device) {
+    auto depthStencilTexture = device.CreateTextureBuilder()
+        .SetDimension(nxt::TextureDimension::e2D)
+        .SetExtent(640, 480, 1)
+        .SetFormat(nxt::TextureFormat::D32FloatS8Uint)
+        .SetMipLevels(1)
+        .SetAllowedUsage(nxt::TextureUsageBit::OutputAttachment)
+        .GetResult();
+    depthStencilTexture.FreezeUsage(nxt::TextureUsageBit::OutputAttachment);
+    return depthStencilTexture.CreateTextureViewBuilder()
+        .GetResult();
+}
+
+void GetNextFramebuffer(const nxt::Device& device,
+        const nxt::RenderPass& renderpass,
+        const nxt::SwapChain& swapchain,
+        const nxt::TextureView& depthStencilView,
+        nxt::Texture* backbuffer,
+        nxt::Framebuffer* framebuffer) {
+    *backbuffer = swapchain.GetNextTexture();
+    auto backbufferView = backbuffer->CreateTextureViewBuilder().GetResult();
+    *framebuffer = device.CreateFramebufferBuilder()
+        .SetRenderPass(renderpass)
+        .SetDimensions(640, 480)
+        .SetAttachment(0, backbufferView)
+        .SetAttachment(1, depthStencilView)
+        .GetResult();
+}
+
 bool InitSample(int argc, const char** argv) {
     for (int i = 0; i < argc; i++) {
         if (std::string("-b") == argv[i] || std::string("--backend") == argv[i]) {

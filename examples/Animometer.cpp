@@ -108,8 +108,8 @@ void init() {
         })"
     );
 
-    renderpass = utils::CreateDefaultRenderPass(device);
-    depthStencilView = utils::CreateDefaultDepthStencilView(device);
+    renderpass = CreateDefaultRenderPass(device);
+    depthStencilView = CreateDefaultDepthStencilView(device);
 
     pipeline = device.CreateRenderPipelineBuilder()
         .SetSubpass(renderpass, 0)
@@ -131,7 +131,7 @@ void init() {
 void frame() {
     nxt::Texture backbuffer;
     nxt::Framebuffer framebuffer;
-    utils::GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &framebuffer);
+    GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &framebuffer);
 
     static int f = 0;
     f++;

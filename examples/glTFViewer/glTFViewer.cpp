@@ -472,8 +472,8 @@ namespace {
         swapchain = GetSwapChain(device);
         swapchain.Configure(nxt::TextureFormat::R8G8B8A8Unorm, 640, 480);
 
-        renderpass = utils::CreateDefaultRenderPass(device);
-        depthStencilView = utils::CreateDefaultDepthStencilView(device);
+        renderpass = CreateDefaultRenderPass(device);
+        depthStencilView = CreateDefaultDepthStencilView(device);
 
         initBuffers();
         initSamplers();
@@ -593,7 +593,7 @@ namespace {
 
     void frame() {
         nxt::Texture backbuffer;
-        utils::GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &lastFramebuffer);
+        GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &lastFramebuffer);
 
         const auto& defaultSceneNodes = scene.scenes.at(scene.defaultScene);
         for (const auto& n : defaultSceneNodes) {

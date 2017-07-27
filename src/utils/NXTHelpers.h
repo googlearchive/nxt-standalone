@@ -18,14 +18,6 @@ namespace utils {
 
     void FillShaderModuleBuilder(const nxt::ShaderModuleBuilder& builder, nxt::ShaderStage stage, const char* source);
     nxt::ShaderModule CreateShaderModule(const nxt::Device& device, nxt::ShaderStage stage, const char* source);
-    nxt::RenderPass CreateDefaultRenderPass(const nxt::Device& device);
-    nxt::TextureView CreateDefaultDepthStencilView(const nxt::Device& device);
-    void GetNextFramebuffer(const nxt::Device& device,
-            const nxt::RenderPass& renderPass,
-            const nxt::SwapChain& swapchain,
-            const nxt::TextureView& depthStencilView,
-            nxt::Texture* backbuffer,
-            nxt::Framebuffer* framebuffer);
     nxt::Buffer CreateFrozenBufferFromData(const nxt::Device& device, const void* data, uint32_t size, nxt::BufferUsageBit usage);
 
 }

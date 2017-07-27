@@ -63,8 +63,8 @@ void init() {
         .SetBindGroupLayout(0, bgl)
         .GetResult();
 
-    renderpass = utils::CreateDefaultRenderPass(device);
-    depthStencilView = utils::CreateDefaultDepthStencilView(device);
+    renderpass = CreateDefaultRenderPass(device);
+    depthStencilView = CreateDefaultDepthStencilView(device);
 
     pipeline = device.CreateRenderPipelineBuilder()
         .SetSubpass(renderpass, 0)
@@ -100,7 +100,7 @@ void frame() {
 
     nxt::Texture backbuffer;
     nxt::Framebuffer framebuffer;
-    utils::GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &framebuffer);
+    GetNextFramebuffer(device, renderpass, swapchain, depthStencilView, &backbuffer, &framebuffer);
 
     nxt::CommandBuffer commands = device.CreateCommandBufferBuilder()
         .BeginRenderPass(renderpass, framebuffer)
