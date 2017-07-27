@@ -159,35 +159,6 @@ namespace utils {
             }
 
             nxtSwapChainError GetNextTexture(nxtSwapChainNextTexture* nextTexture) {
-                // Transition last frame's render target back to being a render target
-                {
-                    ComPtr<ID3D12GraphicsCommandList> commandList = {};
-                    backend::d3d12::OpenCommandList(backendDevice, &commandList);
-
-                    D3D12_RESOURCE_BARRIER resourceBarrier;
-                    resourceBarrier.Transition.pResource = renderTargetResources[renderTargetIndex].Get();
-                    resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-                    resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-                    resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-                    resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-                    resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                    commandList->ResourceBarrier(1, &resourceBarrier);
-                    ASSERT_SUCCESS(commandList->Close());
-                    backend::d3d12::ExecuteCommandLists(backendDevice, { commandList.Get() });
-                }
-
-                backend::d3d12::NextSerial(backendDevice);
-
-                previousRenderTargetIndex = renderTargetIndex;
-                renderTargetIndex = swapChain->GetCurrentBackBufferIndex();
-
-                // If the next render target is not ready to be rendered yet, wait until it is ready.
-                // If the last completed serial is less than the last requested serial for this render target,
-                // then the commands previously executed on this render target have not yet completed
-                backend::d3d12::WaitForSerial(backendDevice, lastSerialRenderTargetWasUsed[renderTargetIndex]);
-
-                lastSerialRenderTargetWasUsed[renderTargetIndex] = backend::d3d12::GetSerial(backendDevice);
-
                 nextTexture->texture = renderTargetResources[renderTargetIndex].Get();
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
@@ -210,6 +181,35 @@ namespace utils {
                 }
 
                 ASSERT_SUCCESS(swapChain->Present(1, 0));
+
+                // Transition last frame's render target back to being a render target
+                {
+                    ComPtr<ID3D12GraphicsCommandList> commandList = {};
+                    backend::d3d12::OpenCommandList(backendDevice, &commandList);
+
+                    D3D12_RESOURCE_BARRIER resourceBarrier;
+                    resourceBarrier.Transition.pResource = renderTargetResources[previousRenderTargetIndex].Get();
+                    resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+                    resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+                    resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+                    resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                    resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                    commandList->ResourceBarrier(1, &resourceBarrier);
+                    ASSERT_SUCCESS(commandList->Close());
+                    backend::d3d12::ExecuteCommandLists(backendDevice, { commandList.Get() });
+                }
+
+                backend::d3d12::NextSerial(backendDevice);
+
+                previousRenderTargetIndex = renderTargetIndex;
+                renderTargetIndex = swapChain->GetCurrentBackBufferIndex();
+
+                // If the next render target is not ready to be rendered yet, wait until it is ready.
+                // If the last completed serial is less than the last requested serial for this render target,
+                // then the commands previously executed on this render target have not yet completed
+                backend::d3d12::WaitForSerial(backendDevice, lastSerialRenderTargetWasUsed[renderTargetIndex]);
+
+                lastSerialRenderTargetWasUsed[renderTargetIndex] = backend::d3d12::GetSerial(backendDevice);
 
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
