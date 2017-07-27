@@ -21,8 +21,32 @@
 namespace backend {
 namespace opengl {
 
+    namespace {
+        GLenum GLPrimitiveTopology(nxt::PrimitiveTopology primitiveTopology) {
+            switch (primitiveTopology) {
+                case nxt::PrimitiveTopology::PointList:
+                    return GL_POINTS;
+                case nxt::PrimitiveTopology::LineList:
+                    return GL_LINES;
+                case nxt::PrimitiveTopology::LineStrip:
+                    return GL_LINE_STRIP;
+                case nxt::PrimitiveTopology::TriangleList:
+                    return GL_TRIANGLES;
+                case nxt::PrimitiveTopology::TriangleStrip:
+                    return GL_TRIANGLE_STRIP;
+                default:
+                    UNREACHABLE();
+            }
+        }
+    }
+
     RenderPipeline::RenderPipeline(RenderPipelineBuilder* builder)
-        : RenderPipelineBase(builder), PipelineGL(this, builder) {
+        : RenderPipelineBase(builder), PipelineGL(this, builder),
+          glPrimitiveTopology(GLPrimitiveTopology(GetPrimitiveTopology())) {
+    }
+
+    GLenum RenderPipeline::GetGLPrimitiveTopology() const {
+        return glPrimitiveTopology;
     }
 
     void RenderPipeline::ApplyNow(PersistentPipelineState &persistentPipelineState) {

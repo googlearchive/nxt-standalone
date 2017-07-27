@@ -29,7 +29,7 @@ set(UNITTESTS_DIR ${TESTS_DIR}/unittests)
 set(VALIDATION_TESTS_DIR ${UNITTESTS_DIR}/validation)
 set(END2END_TESTS_DIR ${TESTS_DIR}/end2end)
 
-add_executable(nxt_unittests
+list(APPEND UNITTEST_SOURCES
     ${UNITTESTS_DIR}/BitSetIteratorTests.cpp
     ${UNITTESTS_DIR}/CommandAllocatorTests.cpp
     ${UNITTESTS_DIR}/EnumClassBitmasksTests.cpp
@@ -49,19 +49,30 @@ add_executable(nxt_unittests
     ${VALIDATION_TESTS_DIR}/InputStateValidationTests.cpp
     ${VALIDATION_TESTS_DIR}/PushConstantsValidationTests.cpp
     ${VALIDATION_TESTS_DIR}/RenderPassValidationTests.cpp
+    ${VALIDATION_TESTS_DIR}/RenderPipelineValidationTests.cpp
     ${VALIDATION_TESTS_DIR}/UsageValidationTests.cpp
     ${VALIDATION_TESTS_DIR}/ValidationTest.cpp
     ${VALIDATION_TESTS_DIR}/ValidationTest.h
     ${TESTS_DIR}/UnittestsMain.cpp
 )
+
+if (NXT_ENABLE_D3D12)
+    list(APPEND UNITTEST_SOURCES
+        ${UNITTESTS_DIR}/d3d12/CopySplitTests.cpp
+    )
+endif()
+
+add_executable(nxt_unittests ${UNITTEST_SOURCES})
 target_link_libraries(nxt_unittests nxt_common gtest nxt_backend mock_nxt nxt_wire utils)
 NXTInternalTarget("tests" nxt_unittests)
 
 add_executable(nxt_end2end_tests
     ${END2END_TESTS_DIR}/BasicTests.cpp
     ${END2END_TESTS_DIR}/BufferTests.cpp
-    ${END2END_TESTS_DIR}/InputStateTests.cpp
     ${END2END_TESTS_DIR}/CopyTests.cpp
+    ${END2END_TESTS_DIR}/DepthStencilStateTests.cpp
+    ${END2END_TESTS_DIR}/InputStateTests.cpp
+    ${END2END_TESTS_DIR}/PrimitiveTopologyTests.cpp
     ${TESTS_DIR}/End2EndTestsMain.cpp
     ${TESTS_DIR}/NXTTest.cpp
     ${TESTS_DIR}/NXTTest.h

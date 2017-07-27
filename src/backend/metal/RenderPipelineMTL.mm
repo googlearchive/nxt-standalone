@@ -23,8 +23,38 @@
 namespace backend {
 namespace metal {
 
+    namespace {
+        MTLPrimitiveType MTLPrimitiveTopology(nxt::PrimitiveTopology primitiveTopology) {
+            switch (primitiveTopology) {
+                case nxt::PrimitiveTopology::PointList:
+                    return MTLPrimitiveTypePoint;
+                case nxt::PrimitiveTopology::LineList:
+                    return MTLPrimitiveTypeLine;
+                case nxt::PrimitiveTopology::LineStrip:
+                    return MTLPrimitiveTypeLineStrip;
+                case nxt::PrimitiveTopology::TriangleList:
+                    return MTLPrimitiveTypeTriangle;
+                case nxt::PrimitiveTopology::TriangleStrip:
+                    return MTLPrimitiveTypeTriangleStrip;
+            }
+        }
+
+        MTLPrimitiveTopologyClass MTLInputPrimitiveTopology(nxt::PrimitiveTopology primitiveTopology) {
+            switch (primitiveTopology) {
+                case nxt::PrimitiveTopology::PointList:
+                    return MTLPrimitiveTopologyClassPoint;
+                case nxt::PrimitiveTopology::LineList:
+                case nxt::PrimitiveTopology::LineStrip:
+                    return MTLPrimitiveTopologyClassLine;
+                case nxt::PrimitiveTopology::TriangleList:
+                case nxt::PrimitiveTopology::TriangleStrip:
+                    return MTLPrimitiveTopologyClassTriangle;
+            }
+        }
+    }
+
     RenderPipeline::RenderPipeline(RenderPipelineBuilder* builder)
-        : RenderPipelineBase(builder) {
+        : RenderPipelineBase(builder), mtlPrimitiveTopology(MTLPrimitiveTopology(GetPrimitiveTopology())) {
 
         auto mtlDevice = ToBackend(builder->GetDevice())->GetMTLDevice();
 
@@ -51,6 +81,7 @@ namespace metal {
         // TODO(cwallez@chromium.org): get the attachment formats from the subpass
         descriptor.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA8Unorm;
         descriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+        descriptor.inputPrimitiveTopology = MTLInputPrimitiveTopology(GetPrimitiveTopology());
 
         InputState* inputState = ToBackend(GetInputState());
         descriptor.vertexDescriptor = inputState->GetMTLVertexDescriptor();
@@ -71,6 +102,10 @@ namespace metal {
 
     RenderPipeline::~RenderPipeline() {
         [mtlRenderPipelineState release];
+    }
+
+    MTLPrimitiveType RenderPipeline::GetMTLPrimitiveTopology() const {
+        return mtlPrimitiveTopology;
     }
 
     void RenderPipeline::Encode(id<MTLRenderCommandEncoder> encoder) {

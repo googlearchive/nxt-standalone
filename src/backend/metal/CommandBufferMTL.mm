@@ -272,7 +272,7 @@ namespace metal {
 
                         ASSERT(encoders.render);
                         [encoders.render
-                            drawPrimitives:MTLPrimitiveTypeTriangle
+                            drawPrimitives:lastRenderPipeline->GetMTLPrimitiveTopology()
                             vertexStart:draw->firstVertex
                             vertexCount:draw->vertexCount
                             instanceCount:draw->instanceCount
@@ -286,7 +286,7 @@ namespace metal {
 
                         ASSERT(encoders.render);
                         [encoders.render
-                            drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                            drawIndexedPrimitives:lastRenderPipeline->GetMTLPrimitiveTopology()
                             indexCount:draw->indexCount
                             indexType:indexType
                             indexBuffer:indexBuffer
