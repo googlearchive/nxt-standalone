@@ -29,9 +29,8 @@ namespace utils {
             void GetProcAndDevice(nxtProcTable* procs, nxtDevice* device) override {
                 backend::null::Init(procs, device);
             }
-            nxtSwapChainImplementation GetSwapChainImplementation() override {
-                nxtSwapChainImplementation impl = {};
-                return impl;
+            uint64_t GetSwapChainImplementation() override {
+                return 0;
             }
     };
 

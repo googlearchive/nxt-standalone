@@ -29,7 +29,6 @@ namespace backend {
 }
 
 namespace utils {
-    // TODO(kainino@chromium.org): probably make this reference counted
     class SwapChainImplGL {
         public:
             static nxtSwapChainImplementation Create(GLFWwindow* window) {
@@ -161,12 +160,16 @@ namespace utils {
                 backendDevice = *device;
             }
 
-            nxtSwapChainImplementation GetSwapChainImplementation() override {
-                return SwapChainImplGL::Create(window);
+            uint64_t GetSwapChainImplementation() override {
+                if (swapchainImpl.userData == nullptr) {
+                    swapchainImpl = SwapChainImplGL::Create(window);
+                }
+                return reinterpret_cast<uint64_t>(&swapchainImpl);
             }
 
         private:
             nxtDevice backendDevice = nullptr;
+            nxtSwapChainImplementation swapchainImpl = {};
     };
 
     BackendBinding* CreateOpenGLBinding() {

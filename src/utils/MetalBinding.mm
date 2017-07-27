@@ -33,17 +33,16 @@ namespace metal {
 }
 
 namespace utils {
-    // TODO(kainino@chromium.org): probably make this reference counted
     class SwapChainImplMTL {
         public:
-            static nxtSwapChainImplementation Create(GLFWwindow* window) {
+            static nxtSwapChainImplementation Create(id nswindow) {
                 nxtSwapChainImplementation impl = {};
                 impl.Init = Init;
                 impl.Destroy = Destroy;
                 impl.Configure = Configure;
                 impl.GetNextTexture = GetNextTexture;
                 impl.Present = Present;
-                impl.userData = new SwapChainImplMTL(window);
+                impl.userData = new SwapChainImplMTL(nswindow);
                 return impl;
             }
 
@@ -56,8 +55,8 @@ namespace utils {
             id<CAMetalDrawable> currentDrawable = nil;
             id<MTLTexture> currentTexture = nil;
 
-            SwapChainImplMTL(GLFWwindow* window)
-                : nsWindow(glfwGetCocoaWindow(window)) {
+            SwapChainImplMTL(id nsWindow)
+                : nsWindow(nswindow) {
             }
 
             ~SwapChainImplMTL() {
@@ -171,13 +170,17 @@ namespace utils {
                 backendDevice = *device;
             }
 
-            nxtSwapChainImplementation GetSwapChainImplementation() override {
-                return SwapChainImplMTL::Create(window);
+            uint64_t GetSwapChainImplementation() override {
+				if (swapchainImpl.userData == nullptr) {
+					swapchainImpl = SwapChainImplMTL::Create(glfwGetCocoaWindow(window));
+				}
+				return reinterpret_cast<uint64_t>(&swapchainImpl);
             }
 
         private:
             id<MTLDevice> metalDevice = nil;
             nxtDevice backendDevice = nullptr;
+			nxtSwapChainImplementation swapchainImpl = {};
     };
 
     BackendBinding* CreateMetalBinding() {

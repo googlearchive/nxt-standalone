@@ -37,7 +37,7 @@ namespace utils {
 
             virtual void SetupGLFWWindowHints() = 0;
             virtual void GetProcAndDevice(nxtProcTable* procs, nxtDevice* device) = 0;
-            virtual nxtSwapChainImplementation GetSwapChainImplementation() = 0;
+            virtual uint64_t GetSwapChainImplementation() = 0;
 
             void SetWindow(GLFWwindow* window);
 

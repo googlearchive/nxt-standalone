@@ -71,10 +71,9 @@ namespace utils {
         }
     }
 
-    // TODO(kainino@chromium.org): probably make this reference counted
     class SwapChainImplD3D12 {
         public:
-            static nxtSwapChainImplementation Create(GLFWwindow* window) {
+            static nxtSwapChainImplementation Create(HWND window) {
                 nxtSwapChainImplementation impl = {};
                 impl.Init = Init;
                 impl.Destroy = Destroy;
@@ -90,7 +89,7 @@ namespace utils {
 
             static constexpr unsigned int kFrameCount = 2;
 
-            GLFWwindow* window = nullptr;
+            HWND window = 0;
             ComPtr<IDXGIFactory4> factory = {};
             ComPtr<ID3D12CommandQueue> commandQueue = {};
             ComPtr<IDXGISwapChain3> swapChain = {};
@@ -101,7 +100,7 @@ namespace utils {
             uint32_t previousRenderTargetIndex = 0;
             uint64_t lastSerialRenderTargetWasUsed[kFrameCount] = {};
 
-            SwapChainImplD3D12(GLFWwindow* window)
+            SwapChainImplD3D12(HWND window)
                 : window(window), factory(CreateFactory()) {
             }
 
@@ -131,11 +130,10 @@ namespace utils {
                 swapChainDesc.SampleDesc.Count = 1;
                 swapChainDesc.SampleDesc.Quality = 0;
 
-                HWND win32Window = glfwGetWin32Window(window);
                 ComPtr<IDXGISwapChain1> swapChain1;
                 ASSERT_SUCCESS(factory->CreateSwapChainForHwnd(
                     commandQueue.Get(),
-                    win32Window,
+                    window,
                     &swapChainDesc,
                     nullptr,
                     nullptr,
@@ -179,13 +177,18 @@ namespace utils {
                 }
 
                 backend::d3d12::NextSerial(backendDevice);
-                renderTargetIndex = swapChain->GetCurrentBackBufferIndex();
 
                 previousRenderTargetIndex = renderTargetIndex;
+                renderTargetIndex = swapChain->GetCurrentBackBufferIndex();
 
-                // Tell the backend to render to the current render target
+                // If the next render target is not ready to be rendered yet, wait until it is ready.
+                // If the last completed serial is less than the last requested serial for this render target,
+                // then the commands previously executed on this render target have not yet completed
+                backend::d3d12::WaitForSerial(backendDevice, lastSerialRenderTargetWasUsed[renderTargetIndex]);
+
+                lastSerialRenderTargetWasUsed[renderTargetIndex] = backend::d3d12::GetSerial(backendDevice);
+
                 nextTexture->texture = renderTargetResources[renderTargetIndex].Get();
-
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
 
@@ -207,13 +210,6 @@ namespace utils {
                 }
 
                 ASSERT_SUCCESS(swapChain->Present(1, 0));
-
-                // If the next render target is not ready to be rendered yet, wait until it is ready.
-                // If the last completed serial is less than the last requested serial for this render target,
-                // then the commands previously executed on this render target have not yet completed
-                backend::d3d12::WaitForSerial(backendDevice, lastSerialRenderTargetWasUsed[renderTargetIndex]);
-
-                lastSerialRenderTargetWasUsed[renderTargetIndex] = backend::d3d12::GetSerial(backendDevice);
 
                 return NXT_SWAP_CHAIN_NO_ERROR;
             }
@@ -263,12 +259,17 @@ namespace utils {
                 backendDevice = *device;
             }
 
-            nxtSwapChainImplementation GetSwapChainImplementation() override {
-                return SwapChainImplD3D12::Create(window);
+            uint64_t GetSwapChainImplementation() override {
+                if (swapchainImpl.userData == nullptr) {
+                    HWND win32Window = glfwGetWin32Window(window);
+                    swapchainImpl = SwapChainImplD3D12::Create(win32Window);
+                }
+                return reinterpret_cast<uint64_t>(&swapchainImpl);
             }
 
         private:
             nxtDevice backendDevice = nullptr;
+            nxtSwapChainImplementation swapchainImpl = {};
 
             // Initialization
             ComPtr<IDXGIFactory4> factory;
