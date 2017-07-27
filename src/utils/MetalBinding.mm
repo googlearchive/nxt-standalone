@@ -56,7 +56,7 @@ namespace utils {
             id<MTLTexture> currentTexture = nil;
 
             SwapChainImplMTL(id nsWindow)
-                : nsWindow(nswindow) {
+                : nsWindow(nsWindow) {
             }
 
             ~SwapChainImplMTL() {
