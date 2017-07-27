@@ -96,6 +96,8 @@ namespace d3d12 {
         ASSERT_SUCCESS(d3d12Device->CreateFence(serial, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
         fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         ASSERT(fenceEvent != nullptr);
+
+        NextSerial();
     }
 
     Device::~Device() {
