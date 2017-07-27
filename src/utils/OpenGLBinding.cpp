@@ -29,11 +29,11 @@ namespace backend {
 }
 
 namespace utils {
-    class SwapChainImplGL {
+    class SwapChainImplGL : SwapChainImpl {
         public:
             static nxtSwapChainImplementation Create(GLFWwindow* window) {
                 auto impl = GenerateSwapChainImplementation<SwapChainImplGL, nxtWSIContextGL>();
-                impl.userData = new SwapChainImplD3D12(window);
+                impl.userData = new SwapChainImplGL(window);
                 return impl;
             }
 

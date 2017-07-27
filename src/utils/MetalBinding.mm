@@ -33,11 +33,11 @@ namespace metal {
 }
 
 namespace utils {
-    class SwapChainImplMTL {
+    class SwapChainImplMTL : SwapChainImpl {
         public:
             static nxtSwapChainImplementation Create(id nswindow) {
                 auto impl = GenerateSwapChainImplementation<SwapChainImplMTL, nxtWSIContextMetal>();
-                impl.userData = new SwapChainImplD3D12(window, procs);
+                impl.userData = new SwapChainImplMTL(window, procs);
                 return impl;
             }
 
