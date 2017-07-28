@@ -31,33 +31,6 @@ namespace utils {
         Vulkan,
     };
 
-    class SwapChainImpl {
-        protected:
-            template<class TImpl, typename TWSIContext>
-            static nxtSwapChainImplementation GenerateSwapChainImplementation() {
-                nxtSwapChainImplementation impl = {};
-                impl.Init = [](void* userData, void* wsiContext) {
-                    auto* ctx = reinterpret_cast<TWSIContext*>(wsiContext);
-                    reinterpret_cast<TImpl*>(userData)->Init(ctx);
-                };
-                impl.Destroy = [](void* userData) {
-                    delete reinterpret_cast<TImpl*>(userData);
-                };
-                impl.Configure = [](void* userData, nxtTextureFormat format, uint32_t width, uint32_t height) {
-                    return reinterpret_cast<TImpl*>(userData)->Configure(
-                        format, width, height);
-                };
-                impl.GetNextTexture = [](void* userData, nxtSwapChainNextTexture* nextTexture) {
-                    return reinterpret_cast<TImpl*>(userData)->GetNextTexture(
-                        nextTexture);
-                };
-                impl.Present = [](void* userData) {
-                    return reinterpret_cast<TImpl*>(userData)->Present();
-                };
-                return impl;
-            }
-    };
-
     class BackendBinding {
         public:
             virtual ~BackendBinding() = default;

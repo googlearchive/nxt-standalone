@@ -17,6 +17,7 @@
 #include "common/Assert.h"
 #include "common/Platform.h"
 #include "nxt/nxt_wsi.h"
+#include "utils/SwapChainImpl.h"
 
 #include <cstdio>
 #include "glad/glad.h"

@@ -16,6 +16,7 @@
 
 #include "common/Assert.h"
 #include "nxt/nxt_wsi.h"
+#include "utils/SwapChainImpl.h"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3.h"
