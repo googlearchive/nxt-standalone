@@ -37,7 +37,7 @@ namespace utils {
         public:
             static nxtSwapChainImplementation Create(id nswindow) {
                 auto impl = GenerateSwapChainImplementation<SwapChainImplMTL, nxtWSIContextMetal>();
-                impl.userData = new SwapChainImplMTL(window, procs);
+                impl.userData = new SwapChainImplMTL(nswindow);
                 return impl;
             }
 
