@@ -128,6 +128,7 @@ namespace d3d12 {
         descriptor.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         descriptor.NumRenderTargets = 1;
         descriptor.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        descriptor.DSVFormat = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
         descriptor.SampleDesc.Count = 1;
 
         Device* device = ToBackend(builder->GetDevice());
