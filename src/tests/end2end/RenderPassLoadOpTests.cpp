@@ -41,6 +41,28 @@ class RenderPassLoadOpTests : public NXTTest {
 
             RGBA8 green(0, 255, 0, 255);
             std::fill(expectGreen.begin(), expectGreen.end(), green);
+
+            RGBA8 blue(0, 0, 255, 255);
+            std::fill(expectBlue.begin(), expectBlue.end(), blue);
+
+            // draws a blue quad on the right half of the screen
+            const char* vsSource = R"(
+                #version 450
+                void main() {
+                    const vec2 pos[6] = vec2[6](
+                        vec2(0, -1), vec2(1, -1), vec2(0, 1),
+                        vec2(0,  1), vec2(1, -1), vec2(1, 1));
+                    gl_Position = vec4(pos[gl_VertexIndex], 0.f, 1.f);
+                }
+                )";
+            const char* fsSource = R"(
+                #version 450
+                out vec4 color;
+                void main() {
+                    color = vec4(0.f, 0.f, 1.f, 1.f);
+                }
+                )";
+            blueQuad = DrawQuad(&device, vsSource, fsSource);
         }
 
         nxt::Texture renderTarget;
@@ -48,6 +70,9 @@ class RenderPassLoadOpTests : public NXTTest {
 
         std::array<RGBA8, kRTSize * kRTSize> expectZero;
         std::array<RGBA8, kRTSize * kRTSize> expectGreen;
+        std::array<RGBA8, kRTSize * kRTSize> expectBlue;
+
+        DrawQuad blueQuad = {};
 };
 
 TEST_P(RenderPassLoadOpTests, ClearOnceLoadOnce) {
@@ -82,7 +107,7 @@ TEST_P(RenderPassLoadOpTests, ClearOnceLoadOnce) {
     // Now cleared to green
     EXPECT_TEXTURE_RGBA8_EQ(expectGreen.data(), renderTarget, 0, 0, kRTSize, kRTSize, 0);
 
-    // Part 2: load+store the texture, make sure its value doesn't change
+    // Part 2: draw a blue quad into the right half of the render target, and check result
 
     auto renderpass2 = device.CreateRenderPassBuilder()
         .SetAttachmentCount(1)
@@ -98,18 +123,26 @@ TEST_P(RenderPassLoadOpTests, ClearOnceLoadOnce) {
         .GetResult();
     framebuffer2.AttachmentSetClearColor(0, 1.0f, 0.0f, 0.0f, 1.0f); // red
 
-    auto commands2 = device.CreateCommandBufferBuilder()
-        .BeginRenderPass(renderpass2, framebuffer2)
-        .BeginRenderSubpass()
-            // No clear should occur
+    nxt::CommandBuffer commands2;
+    {
+        auto builder = device.CreateCommandBufferBuilder()
+            .BeginRenderPass(renderpass2, framebuffer2)
+            .BeginRenderSubpass()
+            // Clear should occur implicitly
+            .Clone();
+        blueQuad.Draw(renderpass2, &builder);
+        commands2 = builder
             // Store should occur implicitly
-        .EndRenderSubpass()
-        .EndRenderPass()
-        .GetResult();
+            .EndRenderSubpass()
+            .EndRenderPass()
+            .GetResult();
+    }
 
     queue.Submit(1, &commands2);
-    // Should still be green after loading and storing back
-    EXPECT_TEXTURE_RGBA8_EQ(expectGreen.data(), renderTarget, 0, 0, kRTSize, kRTSize, 0);
+    // Left half should still be green
+    EXPECT_TEXTURE_RGBA8_EQ(expectGreen.data(), renderTarget, 0, 0, kRTSize / 2, kRTSize, 0);
+    // Right half should now be blue
+    EXPECT_TEXTURE_RGBA8_EQ(expectBlue.data(), renderTarget, kRTSize / 2, 0, kRTSize / 2, kRTSize, 0);
 }
 
 TEST_P(RenderPassLoadOpTests, LoadFromUninitialized) {

@@ -18,6 +18,7 @@
 #include "common/Constants.h"
 #include "common/Math.h"
 #include "utils/BackendBinding.h"
+#include "utils/NXTHelpers.h"
 #include "utils/SystemUtils.h"
 
 #include "GLFW/glfw3.h"
@@ -322,6 +323,27 @@ bool RGBA8::operator==(const RGBA8& other) const {
 
 bool RGBA8::operator!=(const RGBA8& other) const {
     return !(*this == other);
+}
+
+DrawQuad::DrawQuad(nxt::Device* device, const char* vsSource, const char* fsSource)
+    : device(device) {
+    vsModule = utils::CreateShaderModule(*device, nxt::ShaderStage::Vertex, vsSource);
+    fsModule = utils::CreateShaderModule(*device, nxt::ShaderStage::Fragment, fsSource);
+
+    pipelineLayout = device->CreatePipelineLayoutBuilder()
+        .GetResult();
+}
+
+void DrawQuad::Draw(const nxt::RenderPass& renderpass, nxt::CommandBufferBuilder* builder) {
+    auto renderPipeline = device->CreateRenderPipelineBuilder()
+        .SetSubpass(renderpass, 0)
+        .SetLayout(pipelineLayout)
+        .SetStage(nxt::ShaderStage::Vertex, vsModule, "main")
+        .SetStage(nxt::ShaderStage::Fragment, fsModule, "main")
+        .GetResult();
+
+    builder->SetRenderPipeline(renderPipeline);
+    builder->DrawArrays(6, 1, 0, 0);
 }
 
 std::ostream& operator<< (std::ostream& stream, const RGBA8& color) {
