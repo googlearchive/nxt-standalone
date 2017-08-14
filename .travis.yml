@@ -17,7 +17,7 @@ addons:
  apt:
   sources:
    # PPAs to get newer toolchains
-   - llvm-toolchain-trusty
+   - llvm-toolchain-trusty-5.0
    - ubuntu-toolchain-r-test
   packages:
    # Get recent compilers
