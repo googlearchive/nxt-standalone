@@ -107,8 +107,12 @@ class RenderPassLoadOpTests : public NXTTest {
 };
 
 // Tests clearing, loading, and drawing into color attachments
-// TODO(kainino@chromium.org): currently fails on OpenGL backend
-TEST_P(RenderPassLoadOpTests, DISABLED_ColorClearThenLoadAndDraw) {
+TEST_P(RenderPassLoadOpTests, ColorClearThenLoadAndDraw) {
+    if (IsOpenGL()) {
+        // TODO(kainino@chromium.org): currently fails on OpenGL backend
+        return;
+    }
+
     // Part 1: clear once, check to make sure it's cleared
 
     auto renderpass1 = device.CreateRenderPassBuilder()
