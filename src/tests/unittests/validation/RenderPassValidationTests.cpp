@@ -40,7 +40,10 @@ TEST_F(RenderPassValidationTest, OneSubpassOneAttachment) {
         // without a load op
         .SubpassSetColorAttachment(0, 0, 0)
         .GetResult();
+}
 
+// Tests for setting attachment load ops
+TEST_F(RenderPassValidationTest, AttachmentLoadOps) {
     AssertWillBeSuccess(device.CreateRenderPassBuilder())
         .SetSubpassCount(1)
         .SetAttachmentCount(1)
@@ -138,7 +141,8 @@ TEST_F(RenderPassValidationTest, SubpassOutOfBounds) {
         .GetResult();
 }
 
-TEST_F(RenderPassValidationTest, SubpassAttachmentWrongFormat) {
+// Test attaching depth/stencil textures to color attachments and vice versa
+TEST_F(RenderPassValidationTest, SubpassAttachmentWrongAspect) {
     AssertWillBeError(device.CreateRenderPassBuilder())
         .SetSubpassCount(1)
         .SetAttachmentCount(1)

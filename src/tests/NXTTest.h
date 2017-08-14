@@ -130,19 +130,6 @@ class NXTTest : public ::testing::TestWithParam<BackendType> {
         utils::BackendBinding* binding = nullptr;
 };
 
-class DrawQuad {
-    public:
-        DrawQuad() {}
-        DrawQuad(nxt::Device* device, const char* vsSource, const char* fsSource);
-        void Draw(const nxt::RenderPass& renderpass, nxt::CommandBufferBuilder* builder);
-
-    private:
-        nxt::Device* device = nullptr;
-        nxt::ShaderModule vsModule = {};
-        nxt::ShaderModule fsModule = {};
-        nxt::PipelineLayout pipelineLayout = {};
-};
-
 // Instantiate the test once for each backend provided after the first argument. Use it like this:
 //     NXT_INSTANTIATE_TEST(MyTestFixture, OpenGLBackend, MetalBackend)
 #define NXT_INSTANTIATE_TEST(testName, firstParam, ...) \
