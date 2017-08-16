@@ -39,6 +39,7 @@ namespace backend {
             device->HandleError("Swap chain cannot be configured to zero size");
             return;
         }
+        allowedUsage |= nxt::TextureUsageBit::Present;
         if (!(HasZeroOrOneBits(initialUsage) && (initialUsage & allowedUsage))) {
             device->HandleError("Swap chain configured with invalid texture usage");
             return;
