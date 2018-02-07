@@ -4,7 +4,7 @@ configuration:
  - Debug
 
 build:
- verbosity: normal
+ verbosity: minimal
 
 image:
  - Visual Studio 2017
