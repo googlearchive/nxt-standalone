@@ -3,6 +3,9 @@ clone_depth: 50
 configuration:
  - Debug
 
+build:
+ verbosity: normal
+
 image:
  - Visual Studio 2017
 
