@@ -96,6 +96,9 @@ namespace backend { namespace d3d12 {
         ComPtr<ID3D12DescriptorHeap> heap;
         ASSERT_SUCCESS(
             mDevice->GetD3D12Device()->CreateDescriptorHeap(&heapDescriptor, IID_PPV_ARGS(&heap)));
+        if (heapInfo->first) {
+            mDevice->ReferenceUntilUnused(heapInfo->first);
+        }
 
         AllocationInfo allocationInfo = {allocationSize, allocationSize - count};
         *heapInfo = std::make_pair(heap, allocationInfo);
