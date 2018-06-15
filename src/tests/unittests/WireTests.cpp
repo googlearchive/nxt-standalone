@@ -408,6 +408,39 @@ TEST_F(WireTests, StructureOfValuesArgument) {
     FlushClient();
 }
 
+// Test that the wire is able to send structures that contain objects
+TEST_F(WireTests, StructureOfObjectsArgument) {
+    nxtBindGroupLayoutBuilder bglBuilder = nxtDeviceCreateBindGroupLayoutBuilder(device);
+    nxtBindGroupLayoutBuilderSetBindingsType(bglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLER, 0, 1);
+    nxtBindGroupLayoutBuilderSetBindingsType(bglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLED_TEXTURE, 1, 1);
+    nxtBindGroupLayout bgl = nxtBindGroupLayoutBuilderGetResult(bglBuilder);
+
+    nxtBindGroupLayoutBuilder apiBglBuilder = api.GetNewBindGroupLayoutBuilder();
+    EXPECT_CALL(api, DeviceCreateBindGroupLayoutBuilder(apiDevice))
+          .WillOnce(Return(apiBglBuilder));
+    EXPECT_CALL(api, BindGroupLayoutBuilderSetBindingsType(apiBglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLER, 0, 1));
+    EXPECT_CALL(api, BindGroupLayoutBuilderSetBindingsType(apiBglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLED_TEXTURE, 1, 1));
+    nxtBindGroupLayout apiBgl = api.GetNewBindGroupLayout();
+    EXPECT_CALL(api, BindGroupLayoutBuilderGetResult(apiBglBuilder))
+        .WillOnce(Return(apiBgl));
+
+    nxtPipelineLayoutDescriptor descriptor;
+    descriptor.nextInChain = nullptr;
+    descriptor.numBindGroupLayouts = 1;
+    descriptor.bindGroupLayouts = &bgl;
+
+    nxtDeviceCreatePipelineLayout(device, &descriptor);
+    EXPECT_CALL(api, DeviceCreatePipelineLayout(apiDevice, MatchesLambda([apiBgl](const nxtPipelineLayoutDescriptor* desc) -> bool {
+        return desc->nextInChain == nullptr &&
+            desc->numBindGroupLayouts == 1 &&
+            desc->bindGroupLayouts[0] == apiBgl;
+            // TODO: do I need to somehow check that bgl's contents are correct?
+    })))
+        .WillOnce(Return(nullptr));
+
+    FlushClient();
+}
+
 // Test that the server doesn't forward calls to error objects or with error objects
 // Also test that when GetResult is called on an error builder, the error callback is fired
 TEST_F(WireTests, CallsSkippedAfterBuilderError) {

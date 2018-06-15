@@ -49,9 +49,13 @@ class PushConstantTest: public NXTTest {
                 .SetBindingsType(kAllStages, nxt::BindingType::StorageBuffer, 0, extraBuffer ? 2 : 1)
                 .GetResult();
 
-            nxt::PipelineLayout pl = device.CreatePipelineLayoutBuilder()
-                .SetBindGroupLayout(0, bgl)
-                .GetResult();
+            nxt::PipelineLayout pl;
+            {
+                nxt::PipelineLayoutDescriptor descriptor;
+                descriptor.numBindGroupLayouts = 1;
+                descriptor.bindGroupLayouts = &bgl;
+                pl = device.CreatePipelineLayout(&descriptor);
+            }
 
             nxt::BufferView views[2] = {
                 buf1.CreateBufferViewBuilder().SetExtent(0, 4).GetResult(),
@@ -155,7 +159,7 @@ class PushConstantTest: public NXTTest {
         }
 
         nxt::PipelineLayout MakeEmptyLayout() {
-            return device.CreatePipelineLayoutBuilder().GetResult();
+            return utils::MakeBasicPipelineLayout(device, nullptr);
         }
 
         // The render pipeline adds one to the red channel for successful vertex push constant test

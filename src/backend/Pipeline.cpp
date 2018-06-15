@@ -27,10 +27,12 @@ namespace backend {
     PipelineBase::PipelineBase(PipelineBuilder* builder)
         : mStageMask(builder->mStageMask), mLayout(std::move(builder->mLayout)) {
         if (!mLayout) {
+            nxt::PipelineLayoutDescriptor descriptor;
+            descriptor.numBindGroupLayouts = 0;
+            descriptor.bindGroupLayouts = nullptr;
             mLayout = builder->GetParentBuilder()
                           ->GetDevice()
-                          ->CreatePipelineLayoutBuilder()
-                          ->GetResult();
+                          ->CreatePipelineLayout(&descriptor);
             // Remove the external ref objects are created with
             mLayout->Release();
         }
