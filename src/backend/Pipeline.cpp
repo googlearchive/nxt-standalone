@@ -30,9 +30,7 @@ namespace backend {
             nxt::PipelineLayoutDescriptor descriptor;
             descriptor.numBindGroupLayouts = 0;
             descriptor.bindGroupLayouts = nullptr;
-            mLayout = builder->GetParentBuilder()
-                          ->GetDevice()
-                          ->CreatePipelineLayout(&descriptor);
+            mLayout = builder->GetParentBuilder()->GetDevice()->CreatePipelineLayout(&descriptor);
             // Remove the external ref objects are created with
             mLayout->Release();
         }

@@ -149,7 +149,8 @@ namespace utils {
 
         return desc;
     }
-    nxt::PipelineLayout MakeBasicPipelineLayout(const nxt::Device& device, const nxt::BindGroupLayout* bindGroupLayout) {
+    nxt::PipelineLayout MakeBasicPipelineLayout(const nxt::Device& device,
+                                                const nxt::BindGroupLayout* bindGroupLayout) {
         nxt::PipelineLayoutDescriptor descriptor;
         if (bindGroupLayout) {
             descriptor.numBindGroupLayouts = 1;

@@ -153,8 +153,7 @@ def link_object(obj, types):
 
 def link_structure(struct, types):
     def make_member(m):
-        member = StructureMember(Name(m['name']), types[m['type']], m.get('annotation', 'value'))
-        return member
+        return StructureMember(Name(m['name']), types[m['type']], m.get('annotation', 'value'))
 
     members = []
     members_by_name = {}

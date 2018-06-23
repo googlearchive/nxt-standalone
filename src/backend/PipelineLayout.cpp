@@ -20,23 +20,30 @@
 
 namespace backend {
 
-    MaybeError ValidatePipelineLayoutDescriptor(DeviceBase*, const nxt::PipelineLayoutDescriptor* descriptor) {
+    MaybeError ValidatePipelineLayoutDescriptor(DeviceBase*,
+                                                const nxt::PipelineLayoutDescriptor* descriptor) {
         NXT_TRY_ASSERT(descriptor->nextInChain == nullptr, "nextInChain must be nullptr");
-        NXT_TRY_ASSERT(descriptor->numBindGroupLayouts <= kMaxBindGroups, "too many bind group layouts");
+        NXT_TRY_ASSERT(descriptor->numBindGroupLayouts <= kMaxBindGroups,
+                       "too many bind group layouts");
         for (uint32_t i = 0; i < descriptor->numBindGroupLayouts; ++i) {
-            NXT_TRY_ASSERT(descriptor->bindGroupLayouts[i].Get() != nullptr, "bind group layouts may not be null");
+            NXT_TRY_ASSERT(descriptor->bindGroupLayouts[i].Get() != nullptr,
+                           "bind group layouts may not be null");
         }
         return {};
     }
 
     // PipelineLayoutBase
 
-    PipelineLayoutBase::PipelineLayoutBase(DeviceBase* device, const nxt::PipelineLayoutDescriptor* descriptor) {
+    PipelineLayoutBase::PipelineLayoutBase(DeviceBase* device,
+                                           const nxt::PipelineLayoutDescriptor* descriptor) {
         ASSERT(descriptor->numBindGroupLayouts <= kMaxBindGroups);
         for (uint32_t group = 0; group < descriptor->numBindGroupLayouts; ++group) {
-            mBindGroupLayouts[group] = reinterpret_cast<BindGroupLayoutBase*>(descriptor->bindGroupLayouts[group].Get());
+            mBindGroupLayouts[group] =
+                reinterpret_cast<BindGroupLayoutBase*>(descriptor->bindGroupLayouts[group].Get());
             mMask.set(group);
         }
+        // TODO(kainino@chromium.org): It shouldn't be necessary to construct default bind
+        // group layouts here. Remove these and fix things so that they are not needed.
         for (uint32_t group = descriptor->numBindGroupLayouts; group < kMaxBindGroups; ++group) {
             auto builder = device->CreateBindGroupLayoutBuilder();
             mBindGroupLayouts[group] = builder->GetResult();

@@ -49,13 +49,7 @@ class PushConstantTest: public NXTTest {
                 .SetBindingsType(kAllStages, nxt::BindingType::StorageBuffer, 0, extraBuffer ? 2 : 1)
                 .GetResult();
 
-            nxt::PipelineLayout pl;
-            {
-                nxt::PipelineLayoutDescriptor descriptor;
-                descriptor.numBindGroupLayouts = 1;
-                descriptor.bindGroupLayouts = &bgl;
-                pl = device.CreatePipelineLayout(&descriptor);
-            }
+            nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);
 
             nxt::BufferView views[2] = {
                 buf1.CreateBufferViewBuilder().SetExtent(0, 4).GetResult(),

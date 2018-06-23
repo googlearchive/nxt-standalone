@@ -49,6 +49,7 @@ namespace utils {
                                           uint32_t height);
 
     nxt::SamplerDescriptor GetDefaultSamplerDescriptor();
-    nxt::PipelineLayout MakeBasicPipelineLayout(const nxt::Device& device, const nxt::BindGroupLayout* bindGroupLayout);
+    nxt::PipelineLayout MakeBasicPipelineLayout(const nxt::Device& device,
+                                                const nxt::BindGroupLayout* bindGroupLayout);
 
 }  // namespace utils

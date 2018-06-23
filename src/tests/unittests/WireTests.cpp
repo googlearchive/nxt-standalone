@@ -409,17 +409,13 @@ TEST_F(WireTests, StructureOfValuesArgument) {
 }
 
 // Test that the wire is able to send structures that contain objects
-TEST_F(WireTests, StructureOfObjectsArgument) {
+TEST_F(WireTests, StructureOfObjectArrayArgument) {
     nxtBindGroupLayoutBuilder bglBuilder = nxtDeviceCreateBindGroupLayoutBuilder(device);
-    nxtBindGroupLayoutBuilderSetBindingsType(bglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLER, 0, 1);
-    nxtBindGroupLayoutBuilderSetBindingsType(bglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLED_TEXTURE, 1, 1);
     nxtBindGroupLayout bgl = nxtBindGroupLayoutBuilderGetResult(bglBuilder);
 
     nxtBindGroupLayoutBuilder apiBglBuilder = api.GetNewBindGroupLayoutBuilder();
     EXPECT_CALL(api, DeviceCreateBindGroupLayoutBuilder(apiDevice))
           .WillOnce(Return(apiBglBuilder));
-    EXPECT_CALL(api, BindGroupLayoutBuilderSetBindingsType(apiBglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLER, 0, 1));
-    EXPECT_CALL(api, BindGroupLayoutBuilderSetBindingsType(apiBglBuilder, NXT_SHADER_STAGE_BIT_FRAGMENT, NXT_BINDING_TYPE_SAMPLED_TEXTURE, 1, 1));
     nxtBindGroupLayout apiBgl = api.GetNewBindGroupLayout();
     EXPECT_CALL(api, BindGroupLayoutBuilderGetResult(apiBglBuilder))
         .WillOnce(Return(apiBgl));
@@ -434,7 +430,6 @@ TEST_F(WireTests, StructureOfObjectsArgument) {
         return desc->nextInChain == nullptr &&
             desc->numBindGroupLayouts == 1 &&
             desc->bindGroupLayouts[0] == apiBgl;
-            // TODO: do I need to somehow check that bgl's contents are correct?
     })))
         .WillOnce(Return(nullptr));
 

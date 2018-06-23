@@ -27,7 +27,8 @@
 
 namespace backend {
 
-    MaybeError ValidatePipelineLayoutDescriptor(DeviceBase*, const nxt::PipelineLayoutDescriptor* descriptor);
+    MaybeError ValidatePipelineLayoutDescriptor(DeviceBase*,
+                                                const nxt::PipelineLayoutDescriptor* descriptor);
 
     using BindGroupLayoutArray = std::array<Ref<BindGroupLayoutBase>, kMaxBindGroups>;
 
