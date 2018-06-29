@@ -223,10 +223,11 @@ void initSim() {
         }
     )");
 
-    nxt::BindGroupLayout bgl = device.CreateBindGroupLayoutBuilder()
-        .SetBindingsType(nxt::ShaderStageBit::Compute, nxt::BindingType::UniformBuffer, 0, 1)
-        .SetBindingsType(nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer, 1, 2)
-        .GetResult();
+    auto bgl = utils::MakeBindGroupLayout(device, {
+        { 0, nxt::ShaderStageBit::Compute, nxt::BindingType::UniformBuffer, 1 },
+        { 1, nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer, 1 },
+        { 2, nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer, 1 },
+    });
 
     nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);
 

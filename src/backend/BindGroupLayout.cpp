@@ -22,6 +22,21 @@
 
 namespace backend {
 
+    MaybeError ValidateBindGroupLayoutDescriptor(DeviceBase*,
+                                                 const nxt::BindGroupLayoutDescriptor* descriptor) {
+        NXT_TRY_ASSERT(descriptor->nextInChain == nullptr, "nextInChain must be nullptr");
+
+        std::bitset<kMaxBindingsPerGroup> bindingsSet;
+        for (uint32_t i = 0; i < descriptor->numBindings; ++i) {
+            auto& binding = descriptor->bindings[i];
+            NXT_TRY_ASSERT(binding.binding <= kMaxBindingsPerGroup,
+                           "some binding index exceeds the maximum value");
+            NXT_TRY_ASSERT(!bindingsSet[i], "some binding index was specified more than once");
+            bindingsSet.set(binding.binding);
+        }
+        return {};
+    }
+
     namespace {
         size_t HashBindingInfo(const BindGroupLayoutBase::LayoutBindingInfo& info) {
             size_t hash = Hash(info.mask);
@@ -52,8 +67,19 @@ namespace backend {
 
     // BindGroupLayoutBase
 
-    BindGroupLayoutBase::BindGroupLayoutBase(BindGroupLayoutBuilder* builder, bool blueprint)
-        : mDevice(builder->mDevice), mBindingInfo(builder->mBindingInfo), mIsBlueprint(blueprint) {
+    BindGroupLayoutBase::BindGroupLayoutBase(DeviceBase* device,
+                                             const nxt::BindGroupLayoutDescriptor* descriptor,
+                                             bool blueprint)
+        : mDevice(device), mIsBlueprint(blueprint) {
+        for (uint32_t i = 0; i < descriptor->numBindings; ++i) {
+            auto& binding = descriptor->bindings[i];
+            uint32_t index = binding.binding;
+            mBindingInfo.visibilities[index] = binding.visibility;
+            mBindingInfo.types[index] = binding.type;
+            mBindingInfo.arraySizes[index] = binding.arraySize;
+            ASSERT(!mBindingInfo.mask[index]);
+            mBindingInfo.mask.set(index);
+        }
     }
 
     BindGroupLayoutBase::~BindGroupLayoutBase() {
@@ -71,6 +97,7 @@ namespace backend {
         return mDevice;
     }
 
+#if 0
     // BindGroupLayoutBuilder
 
     BindGroupLayoutBuilder::BindGroupLayoutBuilder(DeviceBase* device) : Builder(device) {
@@ -108,6 +135,7 @@ namespace backend {
             mBindingInfo.types[i] = bindingType;
         }
     }
+#endif
 
     // BindGroupLayoutCacheFuncs
 

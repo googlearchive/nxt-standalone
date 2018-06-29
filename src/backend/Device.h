@@ -36,7 +36,6 @@ namespace backend {
         DeviceBase* GetDevice();
 
         virtual BindGroupBase* CreateBindGroup(BindGroupBuilder* builder) = 0;
-        virtual BindGroupLayoutBase* CreateBindGroupLayout(BindGroupLayoutBuilder* builder) = 0;
         virtual BlendStateBase* CreateBlendState(BlendStateBuilder* builder) = 0;
         virtual BufferBase* CreateBuffer(BufferBuilder* builder) = 0;
         virtual BufferViewBase* CreateBufferView(BufferViewBuilder* builder) = 0;
@@ -70,12 +69,12 @@ namespace backend {
         // instead of a backend Foo object. If the blueprint doesn't match an object in the
         // cache, then the builder is used to make a new object.
         BindGroupLayoutBase* GetOrCreateBindGroupLayout(const BindGroupLayoutBase* blueprint,
-                                                        BindGroupLayoutBuilder* builder);
+                                                        const nxt::BindGroupLayoutDescriptor* descriptor);
         void UncacheBindGroupLayout(BindGroupLayoutBase* obj);
 
         // NXT API
         BindGroupBuilder* CreateBindGroupBuilder();
-        BindGroupLayoutBuilder* CreateBindGroupLayoutBuilder();
+        BindGroupLayoutBase* CreateBindGroupLayout(const nxt::BindGroupLayoutDescriptor* descriptor);
         BlendStateBuilder* CreateBlendStateBuilder();
         BufferBuilder* CreateBufferBuilder();
         CommandBufferBuilder* CreateCommandBufferBuilder();
@@ -97,6 +96,8 @@ namespace backend {
         void Release();
 
       private:
+        virtual ResultOrError<BindGroupLayoutBase*> CreateBindGroupLayoutImpl(
+            const nxt::BindGroupLayoutDescriptor* descriptor) = 0;
         virtual ResultOrError<PipelineLayoutBase*> CreatePipelineLayoutImpl(
             const nxt::PipelineLayoutDescriptor* descriptor) = 0;
         virtual ResultOrError<QueueBase*> CreateQueueImpl() = 0;

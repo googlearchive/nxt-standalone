@@ -410,14 +410,17 @@ TEST_F(WireTests, StructureOfValuesArgument) {
 
 // Test that the wire is able to send structures that contain objects
 TEST_F(WireTests, StructureOfObjectArrayArgument) {
-    nxtBindGroupLayoutBuilder bglBuilder = nxtDeviceCreateBindGroupLayoutBuilder(device);
-    nxtBindGroupLayout bgl = nxtBindGroupLayoutBuilderGetResult(bglBuilder);
+    nxtBindGroupLayoutDescriptor bglDescriptor;
+    bglDescriptor.numBindings = 0;
+    bglDescriptor.bindings = nullptr;
 
-    nxtBindGroupLayoutBuilder apiBglBuilder = api.GetNewBindGroupLayoutBuilder();
-    EXPECT_CALL(api, DeviceCreateBindGroupLayoutBuilder(apiDevice))
-          .WillOnce(Return(apiBglBuilder));
+    nxtBindGroupLayout bgl = nxtDeviceCreateBindGroupLayout(device, &bglDescriptor);
     nxtBindGroupLayout apiBgl = api.GetNewBindGroupLayout();
-    EXPECT_CALL(api, BindGroupLayoutBuilderGetResult(apiBglBuilder))
+    EXPECT_CALL(api, DeviceCreateBindGroupLayout(apiDevice, MatchesLambda([](const nxtBindGroupLayoutDescriptor* desc) -> bool {
+        return desc->nextInChain == nullptr &&
+            desc->numBindings == 0 &&
+            desc->bindings == nullptr;
+    })))
         .WillOnce(Return(apiBgl));
 
     nxtPipelineLayoutDescriptor descriptor;

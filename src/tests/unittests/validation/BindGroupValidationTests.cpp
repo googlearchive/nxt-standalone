@@ -13,21 +13,22 @@
 // limitations under the License.
 
 #include "tests/unittests/validation/ValidationTest.h"
+#include "utils/NXTHelpers.h"
 
 class BindGroupValidationTest : public ValidationTest {
 };
 
 TEST_F(BindGroupValidationTest, BufferViewOffset) {
-    auto layout = device.CreateBindGroupLayoutBuilder()
-        .SetBindingsType(nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 0, 1)
-        .GetResult();
+    auto layout = utils::MakeBindGroupLayout(device, {
+        { 0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1 },
+    });
 
     auto buffer = device.CreateBufferBuilder()
         .SetAllowedUsage(nxt::BufferUsageBit::Uniform)
         .SetInitialUsage(nxt::BufferUsageBit::Uniform)
         .SetSize(512)
         .GetResult();
-    
+
     // Check that offset 0 is valid
     {
         auto bufferView = buffer.CreateBufferViewBuilder()

@@ -75,7 +75,7 @@ namespace backend {
 
     BindGroupLayoutBase* DeviceBase::GetOrCreateBindGroupLayout(
         const BindGroupLayoutBase* blueprint,
-        BindGroupLayoutBuilder* builder) {
+        const nxt::BindGroupLayoutDescriptor* descriptor) {
         // The blueprint is only used to search in the cache and is not modified. However cached
         // objects can be modified, and unordered_set cannot search for a const pointer in a non
         // const pointer set. That's why we do a const_cast here, but the blueprint won't be
@@ -86,7 +86,7 @@ namespace backend {
             return *iter;
         }
 
-        BindGroupLayoutBase* backendObj = CreateBindGroupLayout(builder);
+        BindGroupLayoutBase* backendObj = CreateBindGroupLayout(descriptor);
         mCaches->bindGroupLayouts.insert(backendObj);
         return backendObj;
     }
@@ -98,8 +98,23 @@ namespace backend {
     BindGroupBuilder* DeviceBase::CreateBindGroupBuilder() {
         return new BindGroupBuilder(this);
     }
-    BindGroupLayoutBuilder* DeviceBase::CreateBindGroupLayoutBuilder() {
-        return new BindGroupLayoutBuilder(this);
+    BindGroupLayoutBase* DeviceBase::CreateBindGroupLayout(
+        const nxt::BindGroupLayoutDescriptor* descriptor) {
+        MaybeError validation = ValidateBindGroupLayoutDescriptor(this, descriptor);
+        if (validation.IsError()) {
+            // TODO(cwallez@chromium.org): Implement the WebGPU error handling mechanism.
+            delete validation.AcquireError();
+            return nullptr;
+        }
+
+        ResultOrError<BindGroupLayoutBase*> maybeBindGroupLayout =
+            CreateBindGroupLayoutImpl(descriptor);
+        if (maybeBindGroupLayout.IsError()) {
+            // TODO(cwallez@chromium.org): Implement the WebGPU error handling mechanism.
+            delete maybeBindGroupLayout.AcquireError();
+            return nullptr;
+        }
+        return maybeBindGroupLayout.AcquireSuccess();
     }
     BlendStateBuilder* DeviceBase::CreateBlendStateBuilder() {
         return new BlendStateBuilder(this);
