@@ -50,6 +50,7 @@ class LambdaMatcherImpl : public MatcherInterface<Arg> {
     bool MatchAndExplain(Arg value, MatchResultListener* listener) const override {
         if (!mLambda(value)) {
             *listener << "which doesn't satisfy the custom predicate";
+            return false;
         }
         return true;
     }
@@ -418,8 +419,9 @@ TEST_F(WireTests, StructureOfObjectArrayArgument) {
     nxtBindGroupLayout apiBgl = api.GetNewBindGroupLayout();
     EXPECT_CALL(api, DeviceCreateBindGroupLayout(apiDevice, MatchesLambda([](const nxtBindGroupLayoutDescriptor* desc) -> bool {
         return desc->nextInChain == nullptr &&
-            desc->numBindings == 0 &&
-            desc->bindings == nullptr;
+            desc->numBindings == 0;
+            // desc->bindings isn't nullptr (its allocation is inline in the
+            // wire). But it's sufficient to check numBindings.
     })))
         .WillOnce(Return(apiBgl));
 
@@ -435,6 +437,30 @@ TEST_F(WireTests, StructureOfObjectArrayArgument) {
             desc->bindGroupLayouts[0] == apiBgl;
     })))
         .WillOnce(Return(nullptr));
+
+    FlushClient();
+}
+
+// Test that the wire is able to send structures that contain objects
+TEST_F(WireTests, StructureOfStructureArrayArgument) {
+    static constexpr int NUM_BINDINGS = 3;
+    nxtBindGroupBinding bindings[NUM_BINDINGS] {
+      { 0, NXT_SHADER_STAGE_BIT_VERTEX, NXT_BINDING_TYPE_SAMPLER, 2 },
+      { 1, NXT_SHADER_STAGE_BIT_VERTEX, NXT_BINDING_TYPE_SAMPLED_TEXTURE, 1 },
+      { 2, static_cast<nxtShaderStageBit>(NXT_SHADER_STAGE_BIT_VERTEX | NXT_SHADER_STAGE_BIT_FRAGMENT), NXT_BINDING_TYPE_UNIFORM_BUFFER, 1 },
+    };
+    nxtBindGroupLayoutDescriptor bglDescriptor;
+    bglDescriptor.numBindings = NUM_BINDINGS;
+    bglDescriptor.bindings = bindings;
+
+    nxtDeviceCreateBindGroupLayout(device, &bglDescriptor);
+    nxtBindGroupLayout apiBgl = api.GetNewBindGroupLayout();
+    EXPECT_CALL(api, DeviceCreateBindGroupLayout(apiDevice, MatchesLambda([bindings](const nxtBindGroupLayoutDescriptor* desc) -> bool {
+        return desc->nextInChain == nullptr &&
+            desc->numBindings == 3 &&
+            memcmp(desc->bindings, bindings, sizeof(nxtBindGroupBinding) * NUM_BINDINGS) == 0;
+    })))
+        .WillOnce(Return(apiBgl));
 
     FlushClient();
 }
