@@ -110,10 +110,11 @@ void init() {
         .SetInput(0, 4 * sizeof(float), nxt::InputStepMode::Vertex)
         .GetResult();
 
-    auto bgl = utils::MakeBindGroupLayout(device, {
-        { 0, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1 },
-        { 1, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1 },
-    });
+    auto bgl = utils::MakeBindGroupLayout(
+        device, {
+                    {0, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1},
+                    {1, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1},
+                });
 
     nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);
 

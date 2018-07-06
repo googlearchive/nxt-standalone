@@ -164,7 +164,8 @@ namespace utils {
     }
 
     nxt::BindGroupLayout MakeBindGroupLayout(
-        const nxt::Device& device, std::initializer_list<nxt::BindGroupBinding> bindings) {
+        const nxt::Device& device,
+        std::initializer_list<nxt::BindGroupBinding> bindings) {
         nxt::BindGroupLayoutDescriptor descriptor;
         descriptor.numBindings = static_cast<uint32_t>(bindings.size());
         descriptor.bindings = bindings.begin();

@@ -48,14 +48,16 @@ class PushConstantTest: public NXTTest {
 
             nxt::BindGroupLayout bgl;
             if (extraBuffer) {
-                bgl = utils::MakeBindGroupLayout(device, {
-                    { 0, kAllStages, nxt::BindingType::StorageBuffer, 1 },
-                    { 1, kAllStages, nxt::BindingType::StorageBuffer, 1 },
-                });
+                bgl = utils::MakeBindGroupLayout(
+                    device, {
+                                {0, kAllStages, nxt::BindingType::StorageBuffer, 1},
+                                {1, kAllStages, nxt::BindingType::StorageBuffer, 1},
+                            });
             } else {
-                bgl = utils::MakeBindGroupLayout(device, {
-                    { 0, kAllStages, nxt::BindingType::StorageBuffer, 1 },
-                });
+                bgl = utils::MakeBindGroupLayout(
+                    device, {
+                                {0, kAllStages, nxt::BindingType::StorageBuffer, 1},
+                            });
             }
 
             nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);

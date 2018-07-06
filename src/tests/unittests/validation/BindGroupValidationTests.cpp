@@ -19,9 +19,10 @@ class BindGroupValidationTest : public ValidationTest {
 };
 
 TEST_F(BindGroupValidationTest, BufferViewOffset) {
-    auto layout = utils::MakeBindGroupLayout(device, {
-        { 0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1 },
-    });
+    auto layout = utils::MakeBindGroupLayout(
+        device, {
+                    {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
+                });
 
     auto buffer = device.CreateBufferBuilder()
         .SetAllowedUsage(nxt::BufferUsageBit::Uniform)

@@ -68,13 +68,15 @@ namespace backend {
         // the built object will be, the "blueprint". The blueprint is just a FooBase object
         // instead of a backend Foo object. If the blueprint doesn't match an object in the
         // cache, then the builder is used to make a new object.
-        BindGroupLayoutBase* GetOrCreateBindGroupLayout(const BindGroupLayoutBase* blueprint,
-                                                        const nxt::BindGroupLayoutDescriptor* descriptor);
+        BindGroupLayoutBase* GetOrCreateBindGroupLayout(
+            const BindGroupLayoutBase* blueprint,
+            const nxt::BindGroupLayoutDescriptor* descriptor);
         void UncacheBindGroupLayout(BindGroupLayoutBase* obj);
 
         // NXT API
         BindGroupBuilder* CreateBindGroupBuilder();
-        BindGroupLayoutBase* CreateBindGroupLayout(const nxt::BindGroupLayoutDescriptor* descriptor);
+        BindGroupLayoutBase* CreateBindGroupLayout(
+            const nxt::BindGroupLayoutDescriptor* descriptor);
         BlendStateBuilder* CreateBlendStateBuilder();
         BufferBuilder* CreateBufferBuilder();
         CommandBufferBuilder* CreateCommandBufferBuilder();

@@ -273,15 +273,17 @@ namespace {
 
         nxt::BindGroupLayout bindGroupLayout;
         if (hasTexture) {
-            bindGroupLayout = utils::MakeBindGroupLayout(device, {
-                { 0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1 },
-                { 1, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1 },
-                { 2, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1 },
-            });
+            bindGroupLayout = utils::MakeBindGroupLayout(
+                device, {
+                            {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
+                            {1, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1},
+                            {2, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1},
+                        });
         } else {
-            bindGroupLayout = utils::MakeBindGroupLayout(device, {
-                { 0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1 },
-            });
+            bindGroupLayout = utils::MakeBindGroupLayout(
+                device, {
+                            {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
+                        });
         }
 
         auto depthStencilState = device.CreateDepthStencilStateBuilder()

@@ -43,10 +43,11 @@ protected:
         mRenderPass = utils::CreateBasicRenderPass(device, kRTSize, kRTSize);
         mRenderPass.color.TransitionUsage(nxt::TextureUsageBit::OutputAttachment);
 
-        mBindGroupLayout = utils::MakeBindGroupLayout(device, {
-            { 0, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1 },
-            { 1, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1 },
-        });
+        mBindGroupLayout = utils::MakeBindGroupLayout(
+            device, {
+                        {0, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1},
+                        {1, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1},
+                    });
 
         auto pipelineLayout = utils::MakeBasicPipelineLayout(device, &mBindGroupLayout);
 

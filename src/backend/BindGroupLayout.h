@@ -32,7 +32,8 @@ namespace backend {
 
     class BindGroupLayoutBase : public RefCounted {
       public:
-        BindGroupLayoutBase(DeviceBase* device, const nxt::BindGroupLayoutDescriptor* descriptor,
+        BindGroupLayoutBase(DeviceBase* device,
+                            const nxt::BindGroupLayoutDescriptor* descriptor,
                             bool blueprint = false);
         ~BindGroupLayoutBase() override;
 
