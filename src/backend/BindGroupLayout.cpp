@@ -15,6 +15,7 @@
 #include "backend/BindGroupLayout.h"
 
 #include "backend/Device.h"
+#include "backend/ValidationUtils_autogen.h"
 #include "common/BitSetIterator.h"
 #include "common/HashUtils.h"
 
@@ -31,6 +32,10 @@ namespace backend {
             auto& binding = descriptor->bindings[i];
             NXT_TRY_ASSERT(binding.binding <= kMaxBindingsPerGroup,
                            "some binding index exceeds the maximum value");
+            NXT_TRY(ValidateShaderStageBit(binding.visibility));
+            NXT_TRY(ValidateBindingType(binding.type));
+            NXT_TRY_ASSERT(binding.arraySize > 0, "some array size is 0");
+
             NXT_TRY_ASSERT(!bindingsSet[i], "some binding index was specified more than once");
             bindingsSet.set(binding.binding);
         }
@@ -73,10 +78,12 @@ namespace backend {
         : mDevice(device), mIsBlueprint(blueprint) {
         for (uint32_t i = 0; i < descriptor->numBindings; ++i) {
             auto& binding = descriptor->bindings[i];
+
             uint32_t index = binding.binding;
             mBindingInfo.visibilities[index] = binding.visibility;
             mBindingInfo.types[index] = binding.type;
             mBindingInfo.arraySizes[index] = binding.arraySize;
+
             ASSERT(!mBindingInfo.mask[index]);
             mBindingInfo.mask.set(index);
         }
@@ -96,46 +103,6 @@ namespace backend {
     DeviceBase* BindGroupLayoutBase::GetDevice() const {
         return mDevice;
     }
-
-#if 0
-    // BindGroupLayoutBuilder
-
-    BindGroupLayoutBuilder::BindGroupLayoutBuilder(DeviceBase* device) : Builder(device) {
-    }
-
-    const BindGroupLayoutBase::LayoutBindingInfo& BindGroupLayoutBuilder::GetBindingInfo() const {
-        return mBindingInfo;
-    }
-
-    BindGroupLayoutBase* BindGroupLayoutBuilder::GetResultImpl() {
-        BindGroupLayoutBase blueprint(this, true);
-
-        auto* result = mDevice->GetOrCreateBindGroupLayout(&blueprint, this);
-        return result;
-    }
-
-    void BindGroupLayoutBuilder::SetBindingsType(nxt::ShaderStageBit visibility,
-                                                 nxt::BindingType bindingType,
-                                                 uint32_t start,
-                                                 uint32_t count) {
-        if (start + count > kMaxBindingsPerGroup) {
-            HandleError("Setting bindings type over maximum number of bindings");
-            return;
-        }
-        for (size_t i = start; i < start + count; i++) {
-            if (mBindingInfo.mask[i]) {
-                HandleError("Setting already set binding type");
-                return;
-            }
-        }
-
-        for (size_t i = start; i < start + count; i++) {
-            mBindingInfo.mask.set(i);
-            mBindingInfo.visibilities[i] = visibility;
-            mBindingInfo.types[i] = bindingType;
-        }
-    }
-#endif
 
     // BindGroupLayoutCacheFuncs
 

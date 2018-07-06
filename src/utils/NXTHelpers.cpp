@@ -165,10 +165,17 @@ namespace utils {
 
     nxt::BindGroupLayout MakeBindGroupLayout(
         const nxt::Device& device,
-        std::initializer_list<nxt::BindGroupBinding> bindings) {
+        std::initializer_list<nxt::BindGroupBinding> bindingsInitializer) {
+        std::vector<nxt::BindGroupBinding> bindings;
+        for (const nxt::BindGroupBinding& binding : bindingsInitializer) {
+            if (binding.arraySize != 0) {
+                bindings.push_back(binding);
+            }
+        }
+
         nxt::BindGroupLayoutDescriptor descriptor;
         descriptor.numBindings = static_cast<uint32_t>(bindings.size());
-        descriptor.bindings = bindings.begin();
+        descriptor.bindings = bindings.data();
         return device.CreateBindGroupLayout(&descriptor);
     }
 

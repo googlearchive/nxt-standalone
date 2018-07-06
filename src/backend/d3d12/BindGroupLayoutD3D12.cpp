@@ -23,6 +23,8 @@ namespace backend { namespace d3d12 {
         : BindGroupLayoutBase(builder), mDevice(device), mDescriptorCounts{} {
         const auto& groupInfo = GetBindingInfo();
 
+        // TODO(kainino@chromium.org): use descriptor.arraySize in here and test
+
         for (uint32_t binding : IterateBitSet(groupInfo.mask)) {
             switch (groupInfo.types[binding]) {
                 case nxt::BindingType::UniformBuffer:

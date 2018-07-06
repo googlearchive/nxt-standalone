@@ -68,7 +68,7 @@ namespace backend { namespace vulkan {
             auto& binding = bindings[numBindings];
             binding.binding = bindingIndex;
             binding.descriptorType = VulkanDescriptorType(info.types[bindingIndex]);
-            binding.descriptorCount = 1;
+            binding.descriptorCount = 1;  // TODO(kainino@chromium.org): use arraySize here and test
             binding.stageFlags = VulkanShaderStageFlags(info.visibilities[bindingIndex]);
             binding.pImmutableSamplers = nullptr;
 

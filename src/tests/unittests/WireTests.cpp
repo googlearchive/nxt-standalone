@@ -463,9 +463,13 @@ TEST_F(WireTests, StructureOfStructureArrayArgument) {
         api,
         DeviceCreateBindGroupLayout(
             apiDevice, MatchesLambda([bindings](const nxtBindGroupLayoutDescriptor* desc) -> bool {
-                return desc->nextInChain == nullptr && desc->numBindings == 3 &&
-                       memcmp(desc->bindings, bindings,
-                              sizeof(nxtBindGroupBinding) * NUM_BINDINGS) == 0;
+                for (int i = 0; i < NUM_BINDINGS; ++i) {
+                    if (memcmp(&desc->bindings[i], &bindings[i], sizeof(nxtBindGroupBinding)) !=
+                        0) {
+                        return false;
+                    }
+                }
+                return desc->nextInChain == nullptr && desc->numBindings == 3;
             })))
         .WillOnce(Return(apiBgl));
 
