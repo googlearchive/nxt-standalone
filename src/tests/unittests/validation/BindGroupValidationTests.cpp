@@ -105,3 +105,17 @@ TEST_F(BindGroupValidationTest, BufferViewOffset) {
             .GetResult();
     }
 }
+
+TEST_F(BindGroupValidationTest, BindGroupLayoutCache) {
+    auto layout1 = utils::MakeBindGroupLayout(
+        device, {
+                    {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
+                });
+    auto layout2 = utils::MakeBindGroupLayout(
+        device, {
+                    {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
+                });
+
+    // Caching should cause these to be the same.
+    ASSERT_EQ(layout1.Get(), layout2.Get());
+}

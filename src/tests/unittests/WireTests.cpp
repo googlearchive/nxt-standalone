@@ -417,14 +417,7 @@ TEST_F(WireTests, StructureOfObjectArrayArgument) {
 
     nxtBindGroupLayout bgl = nxtDeviceCreateBindGroupLayout(device, &bglDescriptor);
     nxtBindGroupLayout apiBgl = api.GetNewBindGroupLayout();
-    EXPECT_CALL(api,
-                DeviceCreateBindGroupLayout(
-                    apiDevice, MatchesLambda([](const nxtBindGroupLayoutDescriptor* desc) -> bool {
-                        return desc->nextInChain == nullptr && desc->numBindings == 0;
-                        // desc->bindings isn't nullptr (its allocation is inline in the
-                        // wire). But it's sufficient to check numBindings.
-                    })))
-        .WillOnce(Return(apiBgl));
+    EXPECT_CALL(api, DeviceCreateBindGroupLayout(apiDevice, _)).WillOnce(Return(apiBgl));
 
     nxtPipelineLayoutDescriptor descriptor;
     descriptor.nextInChain = nullptr;
