@@ -40,7 +40,6 @@ namespace backend {
         struct LayoutBindingInfo {
             std::array<nxt::ShaderStageBit, kMaxBindingsPerGroup> visibilities;
             std::array<nxt::BindingType, kMaxBindingsPerGroup> types;
-            std::array<uint32_t, kMaxBindingsPerGroup> arraySizes;
             std::bitset<kMaxBindingsPerGroup> mask;
         };
         const LayoutBindingInfo& GetBindingInfo() const;

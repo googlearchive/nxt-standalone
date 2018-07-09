@@ -167,8 +167,9 @@ namespace utils {
         const nxt::Device& device,
         std::initializer_list<nxt::BindGroupBinding> bindingsInitializer) {
         std::vector<nxt::BindGroupBinding> bindings;
+        nxt::ShaderStageBit kNoStages{};
         for (const nxt::BindGroupBinding& binding : bindingsInitializer) {
-            if (binding.arraySize != 0) {
+            if (binding.visibility != kNoStages) {
                 bindings.push_back(binding);
             }
         }

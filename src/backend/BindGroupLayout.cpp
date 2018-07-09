@@ -34,7 +34,6 @@ namespace backend {
                            "some binding index exceeds the maximum value");
             NXT_TRY(ValidateShaderStageBit(binding.visibility));
             NXT_TRY(ValidateBindingType(binding.type));
-            NXT_TRY_ASSERT(binding.arraySize > 0, "some array size is 0");
 
             NXT_TRY_ASSERT(!bindingsSet[i], "some binding index was specified more than once");
             bindingsSet.set(binding.binding);
@@ -82,7 +81,6 @@ namespace backend {
             uint32_t index = binding.binding;
             mBindingInfo.visibilities[index] = binding.visibility;
             mBindingInfo.types[index] = binding.type;
-            mBindingInfo.arraySizes[index] = binding.arraySize;
 
             ASSERT(!mBindingInfo.mask[index]);
             mBindingInfo.mask.set(index);

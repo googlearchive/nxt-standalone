@@ -225,9 +225,9 @@ void initSim() {
 
     auto bgl = utils::MakeBindGroupLayout(
         device, {
-                    {0, nxt::ShaderStageBit::Compute, nxt::BindingType::UniformBuffer, 1},
-                    {1, nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer, 1},
-                    {2, nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer, 1},
+                    {0, nxt::ShaderStageBit::Compute, nxt::BindingType::UniformBuffer},
+                    {1, nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer},
+                    {2, nxt::ShaderStageBit::Compute, nxt::BindingType::StorageBuffer},
                 });
 
     nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);

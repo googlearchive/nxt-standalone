@@ -38,7 +38,7 @@ class BlendStateTest : public NXTTest {
 
             bindGroupLayout = utils::MakeBindGroupLayout(
                 device, {
-                            {0, nxt::ShaderStageBit::Fragment, nxt::BindingType::UniformBuffer, 1},
+                            {0, nxt::ShaderStageBit::Fragment, nxt::BindingType::UniformBuffer},
                         });
 
             pipelineLayout = utils::MakeBasicPipelineLayout(device, &bindGroupLayout);

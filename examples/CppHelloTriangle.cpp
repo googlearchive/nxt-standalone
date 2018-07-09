@@ -112,8 +112,8 @@ void init() {
 
     auto bgl = utils::MakeBindGroupLayout(
         device, {
-                    {0, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler, 1},
-                    {1, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture, 1},
+                    {0, nxt::ShaderStageBit::Fragment, nxt::BindingType::Sampler},
+                    {1, nxt::ShaderStageBit::Fragment, nxt::BindingType::SampledTexture},
                 });
 
     nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);

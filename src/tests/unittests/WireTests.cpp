@@ -439,12 +439,12 @@ TEST_F(WireTests, StructureOfObjectArrayArgument) {
 TEST_F(WireTests, StructureOfStructureArrayArgument) {
     static constexpr int NUM_BINDINGS = 3;
     nxtBindGroupBinding bindings[NUM_BINDINGS]{
-        {0, NXT_SHADER_STAGE_BIT_VERTEX, NXT_BINDING_TYPE_SAMPLER, 2},
-        {1, NXT_SHADER_STAGE_BIT_VERTEX, NXT_BINDING_TYPE_SAMPLED_TEXTURE, 1},
+        {0, NXT_SHADER_STAGE_BIT_VERTEX, NXT_BINDING_TYPE_SAMPLER},
+        {1, NXT_SHADER_STAGE_BIT_VERTEX, NXT_BINDING_TYPE_SAMPLED_TEXTURE},
         {2,
          static_cast<nxtShaderStageBit>(NXT_SHADER_STAGE_BIT_VERTEX |
                                         NXT_SHADER_STAGE_BIT_FRAGMENT),
-         NXT_BINDING_TYPE_UNIFORM_BUFFER, 1},
+         NXT_BINDING_TYPE_UNIFORM_BUFFER},
     };
     nxtBindGroupLayoutDescriptor bglDescriptor;
     bglDescriptor.numBindings = NUM_BINDINGS;
@@ -457,8 +457,10 @@ TEST_F(WireTests, StructureOfStructureArrayArgument) {
         DeviceCreateBindGroupLayout(
             apiDevice, MatchesLambda([bindings](const nxtBindGroupLayoutDescriptor* desc) -> bool {
                 for (int i = 0; i < NUM_BINDINGS; ++i) {
-                    if (memcmp(&desc->bindings[i], &bindings[i], sizeof(nxtBindGroupBinding)) !=
-                        0) {
+                    const auto& a = desc->bindings[i];
+                    const auto& b = bindings[i];
+                    if (a.binding != b.binding || a.visibility != b.visibility ||
+                        a.type != b.type) {
                         return false;
                     }
                 }

@@ -84,8 +84,7 @@
         "members": [
             {"name": "binding", "type": "uint32_t"},
             {"name": "visibility", "type": "shader stage bit"},
-            {"name": "type", "type": "binding type"},
-            {"name": "array size", "type": "uint32_t"}
+            {"name": "type", "type": "binding type"}
         ]
     },
     "bind group layout descriptor": {

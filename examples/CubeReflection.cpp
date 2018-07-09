@@ -163,8 +163,8 @@ void init() {
 
     auto bgl = utils::MakeBindGroupLayout(
         device, {
-                    {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
-                    {1, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer, 1},
+                    {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer},
+                    {1, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer},
                 });
 
     nxt::PipelineLayout pl = utils::MakeBasicPipelineLayout(device, &bgl);
