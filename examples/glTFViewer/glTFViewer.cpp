@@ -271,7 +271,7 @@ namespace {
         }
         auto inputState = builder.GetResult();
 
-        nxt::ShaderStageBit kNoStages{};
+        constexpr nxt::ShaderStageBit kNoStages{};
         nxt::BindGroupLayout bindGroupLayout = utils::MakeBindGroupLayout(
             device, {
                         {0, nxt::ShaderStageBit::Vertex, nxt::BindingType::UniformBuffer},

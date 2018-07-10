@@ -45,7 +45,7 @@ class PushConstantTest: public NXTTest {
             buf2.FreezeUsage(nxt::BufferUsageBit::Storage);
 
             nxt::ShaderStageBit kAllStages = nxt::ShaderStageBit::Compute | nxt::ShaderStageBit::Fragment | nxt::ShaderStageBit::Vertex;
-            nxt::ShaderStageBit kNoStages{};
+            constexpr nxt::ShaderStageBit kNoStages{};
 
             nxt::BindGroupLayout bgl = utils::MakeBindGroupLayout(
                 device,
