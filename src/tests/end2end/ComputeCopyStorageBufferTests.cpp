@@ -127,7 +127,7 @@ TEST_P(ComputeCopyStorageBufferTests, StructTest) {
         })");
 }
 
-// Test with a sized array SSBO.
+// Test binding a sized array of SSBO descriptors.
 //
 // This is disabled because WebGPU doesn't currently have binding arrays (equivalent to
 // VkDescriptorSetLayoutBinding::descriptorCount). https://github.com/gpuweb/gpuweb/pull/61
@@ -147,7 +147,7 @@ TEST_P(ComputeCopyStorageBufferTests, DISABLED_SizedArray) {
         })");
 }
 
-// Test with an unsized array SSBO.
+// Test binding an unsized array of SSBO descriptors.
 //
 // TODO(kainino@chromium.org): This test may be somewhat wrong. I'm not sure whether this is
 // supposed to be possible on the various native APIs.
