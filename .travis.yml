@@ -22,29 +22,33 @@ compiler:
 cache:
  - pip
 
+base:
+ linux_base: *linux_base
+  # Everything under apt is only used on linux
+  apt:
+   sources:
+    # PPA for clang 5.0
+    - llvm-toolchain-trusty-5.0
+    # PPA for clang-format 7
+    - llvm-toolchain-trusty
+    # PPA for a more recen libstdc++
+    - ubuntu-toolchain-r-test
+   packages:
+    # Get recent compilers
+    - clang-5.0
+    # Pull a recent version of libstdc++
+    - libstdc++-6-dev
+    # Ninja builds are faster
+    - ninja-build
+    # Required for the code generator, unfortunately this is jinja2 2.6 which lacks some of the options we use
+    - python-jinja2
+    # Required dependency for GLFW on Linux
+    - xorg-dev
+    # Format using the latest and greatest
+    - clang-format-7
+
 addons:
- # Everything under apt is only used on linux
- apt:
-  sources:
-   # PPA for clang 5.0
-   - llvm-toolchain-trusty-5.0
-   # PPA for clang-format 7
-   - llvm-toolchain-trusty
-   # PPA for a more recen libstdc++
-   - ubuntu-toolchain-r-test
-  packages:
-   # Get recent compilers
-   - clang-5.0
-   # Pull a recent version of libstdc++
-   - libstdc++-6-dev
-   # Ninja builds are faster
-   - ninja-build
-   # Required for the code generator, unfortunately this is jinja2 2.6 which lacks some of the options we use
-   - python-jinja2
-   # Required dependency for GLFW on Linux
-   - xorg-dev
-   # Format using the latest and greatest
-   - clang-format-7
+ <<: *linux_base
 
 before_install:
  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
