@@ -31,6 +31,7 @@ class CopyTests : public DawnTest {
             uint32_t copyWidth;
             uint32_t copyHeight;
             uint32_t level;
+            uint32_t arrayLayer = 1u;
         };
 
         struct BufferSpec {
@@ -57,13 +58,13 @@ class CopyTests : public DawnTest {
 
 class CopyTests_T2B : public CopyTests {
     protected:
-        static void FillTextureData(uint32_t width, uint32_t height, uint32_t texelsPerRow, RGBA8* data) {
+        static void FillTextureData(uint32_t width, uint32_t height, uint32_t texelsPerRow, RGBA8* data, uint32_t layer) {
             for (unsigned int y = 0; y < height; ++y) {
                 for (unsigned int x = 0; x < width; ++x) {
                     unsigned int i = x + y * texelsPerRow;
                     data[i] = RGBA8(
-                        static_cast<uint8_t>(x % 256),
-                        static_cast<uint8_t>(y % 256),
+                        static_cast<uint8_t>((x + layer)% 256),
+                        static_cast<uint8_t>((y + layer)% 256),
                         static_cast<uint8_t>(x / 256),
                         static_cast<uint8_t>(y / 256));
                 }
@@ -77,7 +78,7 @@ class CopyTests_T2B : public CopyTests {
             descriptor.width = textureSpec.width;
             descriptor.height = textureSpec.height;
             descriptor.depth = 1;
-            descriptor.arrayLayer = 1;
+            descriptor.arrayLayer = textureSpec.arrayLayer;
             descriptor.format = dawn::TextureFormat::R8G8B8A8Unorm;
             descriptor.mipLevel = textureSpec.level + 1;
             descriptor.usage = dawn::TextureUsageBit::TransferDst | dawn::TextureUsageBit::TransferSrc;
@@ -87,18 +88,24 @@ class CopyTests_T2B : public CopyTests {
             uint32_t height = textureSpec.height >> textureSpec.level;
             uint32_t rowPitch = Align(kBytesPerTexel * width, kTextureRowPitchAlignment);
             uint32_t texelsPerRow = rowPitch / kBytesPerTexel;
-            uint32_t texelCount = texelsPerRow * (height - 1) + width;
+            uint32_t texelCountPerLayer = texelsPerRow * (height - 1) + width;
 
             // Create an upload buffer and use it to populate the `level` mip of the texture
-            std::vector<RGBA8> textureData(texelCount);
-            FillTextureData(width, height, rowPitch / kBytesPerTexel, textureData.data());
-            dawn::Buffer uploadBuffer = utils::CreateBufferFromData(device, textureData.data(), static_cast<uint32_t>(sizeof(RGBA8) * textureData.size()), dawn::BufferUsageBit::TransferSrc);
+            std::vector<std::vector<RGBA8>> textureArrayData(textureSpec.arrayLayer);
+            std::vector<dawn::CommandBuffer> commands(textureSpec.arrayLayer);
+            for (uint32_t layer = 0; layer < textureSpec.arrayLayer; ++layer)
+            {
+                textureArrayData[layer].resize(texelCountPerLayer);
+                FillTextureData(width, height, rowPitch / kBytesPerTexel, textureArrayData[layer].data(), layer);
+                dawn::Buffer uploadBuffer = utils::CreateBufferFromData(device, textureArrayData[layer].data(),
+                    static_cast<uint32_t>(sizeof(RGBA8) * textureArrayData[layer].size()), dawn::BufferUsageBit::TransferSrc);
 
-            dawn::CommandBuffer commands[2];
+                commands[layer] = device.CreateCommandBufferBuilder()
+                    .CopyBufferToTexture(uploadBuffer, 0, rowPitch, texture, 0, 0, layer, width, height, 1, textureSpec.level)
+                    .GetResult();
+            }
 
-            commands[0] = device.CreateCommandBufferBuilder()
-                .CopyBufferToTexture(uploadBuffer, 0, rowPitch, texture, 0, 0, 0, width, height, 1, textureSpec.level)
-                .GetResult();
+            queue.Submit(static_cast<uint32_t>(commands.size()), commands.data());
 
             // Create a buffer of size `size` and populate it with empty data (0,0,0,0)
             // Note: Prepopulating the buffer with empty data ensures that there is not random data in the expectation
@@ -109,32 +116,32 @@ class CopyTests_T2B : public CopyTests {
             dawn::Buffer buffer = device.CreateBuffer(&bufDescriptor);
 
             std::vector<RGBA8> emptyData(bufferSpec.size / kBytesPerTexel);
-            buffer.SetSubData(0, static_cast<uint32_t>(emptyData.size() * sizeof(RGBA8)), reinterpret_cast<const uint8_t*>(emptyData.data()));
+            for (uint32_t layer = 0; layer < textureSpec.arrayLayer; ++layer)
+            {
+                buffer.SetSubData(0, static_cast<uint32_t>(emptyData.size() * sizeof(RGBA8)), reinterpret_cast<const uint8_t*>(emptyData.data()));
 
-            // Copy the region [(`x`, `y`), (`x + copyWidth, `y + copyWidth`)] from the `level` mip into the buffer at the specified `offset` and `rowPitch`
-            commands[1] = device.CreateCommandBufferBuilder()
-                .CopyTextureToBuffer(texture, textureSpec.x, textureSpec.y, 0, textureSpec.copyWidth, textureSpec.copyHeight, 1, textureSpec.level, buffer, bufferSpec.offset, bufferSpec.rowPitch)
-                .GetResult();
+                // Copy the region [(`x`, `y`), (`x + copyWidth, `y + copyWidth`)] from the `level` mip into the buffer at the specified `offset` and `rowPitch`
+                dawn::CommandBuffer command = device.CreateCommandBufferBuilder()
+                    .CopyTextureToBuffer(texture, textureSpec.x, textureSpec.y, layer, textureSpec.copyWidth, textureSpec.copyHeight, 1, textureSpec.level, buffer, bufferSpec.offset, bufferSpec.rowPitch)
+                    .GetResult();
+                queue.Submit(1, &command);
 
-            queue.Submit(2, commands);
+                // Pack the data used to create the upload buffer in the specified copy region to have the same format as the expected buffer data.
+                std::vector<RGBA8> expected(bufferSpec.rowPitch / kBytesPerTexel * (textureSpec.copyHeight - 1) + textureSpec.copyWidth);
+                PackTextureData(
+                    &textureArrayData[layer][textureSpec.x + textureSpec.y * (rowPitch / kBytesPerTexel)],
+                    textureSpec.copyWidth,
+                    textureSpec.copyHeight,
+                    rowPitch / kBytesPerTexel,
+                    expected.data(),
+                    bufferSpec.rowPitch / kBytesPerTexel);
 
-            // Pack the data used to create the upload buffer in the specified copy region to have the same format as the expected buffer data.
-            std::vector<RGBA8> expected(bufferSpec.rowPitch / kBytesPerTexel * (textureSpec.copyHeight - 1) + textureSpec.copyWidth);
-            PackTextureData(
-                &textureData[textureSpec.x + textureSpec.y * (rowPitch / kBytesPerTexel)],
-                textureSpec.copyWidth,
-                textureSpec.copyHeight,
-                rowPitch / kBytesPerTexel,
-                expected.data(),
-                bufferSpec.rowPitch / kBytesPerTexel);
-
-            EXPECT_BUFFER_U32_RANGE_EQ(reinterpret_cast<const uint32_t*>(expected.data()), buffer, bufferSpec.offset, static_cast<uint32_t>(expected.size())) <<
-                "Texture to Buffer copy failed copying region [(" << textureSpec.x << ", " << textureSpec.y << "), (" << textureSpec.x + textureSpec.copyWidth << ", " << textureSpec.y + textureSpec.copyHeight <<
-                ")) from " << textureSpec.width << " x " << textureSpec.height << " texture at mip level " << textureSpec.level <<
-                " to " << bufferSpec.size << "-byte buffer with offset " << bufferSpec.offset << " and row pitch " << bufferSpec.rowPitch << std::endl;
+                EXPECT_BUFFER_U32_RANGE_EQ(reinterpret_cast<const uint32_t*>(expected.data()), buffer, bufferSpec.offset, static_cast<uint32_t>(expected.size())) <<
+                    "Texture to Buffer copy failed copying region [(" << textureSpec.x << ", " << textureSpec.y << "), (" << textureSpec.x + textureSpec.copyWidth << ", " << textureSpec.y + textureSpec.copyHeight <<
+                    ")) from " << textureSpec.width << " x " << textureSpec.height << " texture at mip level " << textureSpec.level << " layer " << layer <<
+                    " to " << bufferSpec.size << "-byte buffer with offset " << bufferSpec.offset << " and row pitch " << bufferSpec.rowPitch << std::endl;
+            }
         }
-
-
 };
 
 class CopyTests_B2T : public CopyTests {
@@ -354,6 +361,37 @@ TEST_P(CopyTests_T2B, RowPitchUnaligned) {
         DoTest({ kWidth, kHeight, 0, 0, kWidth, kHeight, 0 }, bufferSpec);
     }
 }
+
+// Test that copying regions of each texture 2D array layer works
+TEST_P(CopyTests_T2B, Texture2DArrayRegion)
+{
+    // TODO(jiawei.shao@intel.com): support 2D array texture on OpenGL, D3D12 and Metal.
+    if (IsOpenGL() || IsD3D12() || IsMetal()) {
+        std::cout << "Test skipped on D3D12 and Metal" << std::endl;
+        return;
+    }
+
+    constexpr uint32_t kWidth = 256;
+    constexpr uint32_t kHeight = 128;
+    constexpr uint32_t kLayers = 6u;
+    DoTest({ kWidth, kHeight, 0, 0, kWidth, kHeight, 0, kLayers }, MinimumBufferSpec(kWidth, kHeight));
+}
+
+// Test that copying texture 2D array mips with 256-byte aligned sizes works
+TEST_P(CopyTests_T2B, Texture2DArrayMip) {
+    // TODO(jiawei.shao@intel.com): support 2D array texture on OpenGL, D3D12 and Metal.
+    if (IsOpenGL() || IsD3D12() || IsMetal()) {
+        std::cout << "Test skipped on D3D12 and Metal" << std::endl;
+        return;
+    }
+    constexpr uint32_t kWidth = 256;
+    constexpr uint32_t kHeight = 128;
+    constexpr uint32_t kLayers = 6u;
+    for (unsigned int i = 1; i < 4; ++i) {
+        DoTest({ kWidth, kHeight, 0, 0, kWidth >> i, kHeight >> i, i, kLayers }, MinimumBufferSpec(kWidth >> i, kHeight >> i));
+    }
+}
+
 
 DAWN_INSTANTIATE_TEST(CopyTests_T2B, D3D12Backend, MetalBackend, OpenGLBackend, VulkanBackend)
 

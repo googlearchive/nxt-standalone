@@ -246,9 +246,12 @@ namespace dawn_native { namespace vulkan {
         createInfo.flags = 0;
         createInfo.imageType = VulkanImageType(GetDimension());
         createInfo.format = VulkanImageFormat(GetFormat());
-        createInfo.extent = VkExtent3D{GetWidth(), GetHeight(), GetDepth()};
         createInfo.mipLevels = GetNumMipLevels();
-        createInfo.arrayLayers = 1;
+
+        // TODO(jiawei.shao@intel.com): support 1D and 3D textures
+        ASSERT(GetDimension() == dawn::TextureDimension::e2D);
+        createInfo.extent = VkExtent3D{ GetWidth(), GetHeight(), 1 };
+        createInfo.arrayLayers = GetDepth();
         createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         createInfo.usage = VulkanImageUsage(GetUsage(), GetFormat());

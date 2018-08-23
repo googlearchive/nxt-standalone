@@ -53,16 +53,19 @@ namespace dawn_native { namespace vulkan {
 
             region.imageSubresource.aspectMask = texture->GetVkAspectMask();
             region.imageSubresource.mipLevel = textureLocation.level;
-            region.imageSubresource.baseArrayLayer = 0;
+
+            // TODO(jiawei.shao@intel.com): support 1D and 3D textures
+            ASSERT(texture->GetDimension() == dawn::TextureDimension::e2D);
+            region.imageSubresource.baseArrayLayer = textureLocation.z;
             region.imageSubresource.layerCount = 1;
 
             region.imageOffset.x = textureLocation.x;
             region.imageOffset.y = textureLocation.y;
-            region.imageOffset.z = textureLocation.z;
+            region.imageOffset.z = 0;
 
             region.imageExtent.width = textureLocation.width;
             region.imageExtent.height = textureLocation.height;
-            region.imageExtent.depth = textureLocation.depth;
+            region.imageExtent.depth = 1;
 
             return region;
         }

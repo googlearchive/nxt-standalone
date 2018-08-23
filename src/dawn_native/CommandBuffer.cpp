@@ -44,14 +44,17 @@ namespace dawn_native {
             if (uint64_t(location.x) + uint64_t(location.width) >
                     (static_cast<uint64_t>(texture->GetWidth()) >> level) ||
                 uint64_t(location.y) + uint64_t(location.height) >
-                    (static_cast<uint64_t>(texture->GetHeight()) >> level)) {
+                    (static_cast<uint64_t>(texture->GetHeight()) >> level) ||
+                uint64_t(location.z) + uint64_t(location.depth) >
+                    (static_cast<uint64_t>(texture->GetDepth()))){
                 DAWN_RETURN_ERROR("Copy would touch outside of the texture");
             }
 
-            // TODO(cwallez@chromium.org): Check the depth bound differently for 2D arrays and 3D
-            // textures
-            if (location.z != 0 || location.depth != 1) {
-                DAWN_RETURN_ERROR("No support for z != 0 and depth != 1 for now");
+            // TODO(jiawei.shao@intel.com): support 1D and 3D textures
+            ASSERT(texture->GetDimension() == dawn::TextureDimension::e2D);
+            if (location.depth != 1u)
+            {
+                DAWN_RETURN_ERROR("No support for copying to multiple 2D array layers for now");
             }
 
             return {};
