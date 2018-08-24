@@ -71,8 +71,6 @@ namespace dawn_native { namespace vulkan {
                     UNREACHABLE();
             }
 
-
-
             return region;
         }
 

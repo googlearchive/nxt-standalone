@@ -53,7 +53,8 @@ namespace dawn_native {
             switch (texture->GetDimension()) {
                 case dawn::TextureDimension::e2D:
                     if (location.depth != 1u) {
-                        DAWN_RETURN_ERROR("No support for copying to multiple 2D array layers for now");
+                        DAWN_RETURN_ERROR(
+                            "No support for copying to multiple 2D array layers for now");
                     }
                     break;
 

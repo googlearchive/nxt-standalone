@@ -257,7 +257,7 @@ namespace dawn_native { namespace vulkan {
 
         switch (GetDimension()) {
             case dawn::TextureDimension::e2D:
-                createInfo.extent = VkExtent3D{ GetWidth(), GetHeight(), 1 };
+                createInfo.extent = VkExtent3D{GetWidth(), GetHeight(), 1};
                 createInfo.arrayLayers = GetDepth();
                 break;
 
