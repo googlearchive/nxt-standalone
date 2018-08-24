@@ -93,8 +93,7 @@ class CopyTests_T2B : public CopyTests {
             // Create an upload buffer and use it to populate the `level` mip of the texture
             std::vector<std::vector<RGBA8>> textureArrayData(textureSpec.arrayLayer);
             std::vector<dawn::CommandBuffer> commands(textureSpec.arrayLayer);
-            for (uint32_t layer = 0; layer < textureSpec.arrayLayer; ++layer)
-            {
+            for (uint32_t layer = 0; layer < textureSpec.arrayLayer; ++layer) {
                 textureArrayData[layer].resize(texelCountPerLayer);
                 FillTextureData(width, height, rowPitch / kBytesPerTexel, textureArrayData[layer].data(), layer);
                 dawn::Buffer uploadBuffer = utils::CreateBufferFromData(device, textureArrayData[layer].data(),
@@ -116,8 +115,8 @@ class CopyTests_T2B : public CopyTests {
             dawn::Buffer buffer = device.CreateBuffer(&bufDescriptor);
 
             std::vector<RGBA8> emptyData(bufferSpec.size / kBytesPerTexel);
-            for (uint32_t layer = 0; layer < textureSpec.arrayLayer; ++layer)
-            {
+
+            for (uint32_t layer = 0; layer < textureSpec.arrayLayer; ++layer) {
                 buffer.SetSubData(0, static_cast<uint32_t>(emptyData.size() * sizeof(RGBA8)), reinterpret_cast<const uint8_t*>(emptyData.data()));
 
                 // Copy the region [(`x`, `y`), (`x + copyWidth, `y + copyWidth`)] from the `level` mip into the buffer at the specified `offset` and `rowPitch`

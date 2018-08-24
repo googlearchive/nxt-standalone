@@ -247,11 +247,6 @@ namespace dawn_native { namespace vulkan {
         createInfo.imageType = VulkanImageType(GetDimension());
         createInfo.format = VulkanImageFormat(GetFormat());
         createInfo.mipLevels = GetNumMipLevels();
-
-        // TODO(jiawei.shao@intel.com): support 1D and 3D textures
-        ASSERT(GetDimension() == dawn::TextureDimension::e2D);
-        createInfo.extent = VkExtent3D{ GetWidth(), GetHeight(), 1 };
-        createInfo.arrayLayers = GetDepth();
         createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         createInfo.usage = VulkanImageUsage(GetUsage(), GetFormat());
@@ -259,6 +254,17 @@ namespace dawn_native { namespace vulkan {
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
         createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        switch (GetDimension()) {
+            case dawn::TextureDimension::e2D:
+                createInfo.extent = VkExtent3D{ GetWidth(), GetHeight(), 1 };
+                createInfo.arrayLayers = GetDepth();
+                break;
+
+            // TODO(jiawei.shao@intel.com): support 1D and 3D textures
+            default:
+                UNREACHABLE();
+        }
 
         if (device->fn.CreateImage(device->GetVkDevice(), &createInfo, nullptr, &mHandle) !=
             VK_SUCCESS) {
