@@ -38,29 +38,24 @@ namespace dawn_native {
                 DAWN_RETURN_ERROR("Copy mip-level out of range");
             }
 
+            if (location.slice >= texture->GetArrayLayers()) {
+                DAWN_RETURN_ERROR("Copy array-layer out of range");
+            }
+
             // All texture dimensions are in uint32_t so by doing checks in uint64_t we avoid
             // overflows.
             uint64_t level = location.level;
             if (uint64_t(location.x) + uint64_t(location.width) >
                     (static_cast<uint64_t>(texture->GetWidth()) >> level) ||
                 uint64_t(location.y) + uint64_t(location.height) >
-                    (static_cast<uint64_t>(texture->GetHeight()) >> level) ||
-                uint64_t(location.z) + uint64_t(location.depth) >
-                    (static_cast<uint64_t>(texture->GetDepth()))) {
+                    (static_cast<uint64_t>(texture->GetHeight()) >> level)) {
                 DAWN_RETURN_ERROR("Copy would touch outside of the texture");
             }
 
-            switch (texture->GetDimension()) {
-                case dawn::TextureDimension::e2D:
-                    if (location.depth != 1u) {
-                        DAWN_RETURN_ERROR(
-                            "No support for copying to multiple 2D array layers for now");
-                    }
-                    break;
-
-                // TODO(jiawei.shao@intel.com): support 1D and 3D textures
-                default:
-                    UNREACHABLE();
+            // TODO(cwallez@chromium.org): Check the depth bound differently for 2D arrays and 3D
+            // textures
+            if (location.z != 0 || location.depth != 1) {
+                DAWN_RETURN_ERROR("No support for z != 0 and depth != 1 for now");
             }
 
             return {};
@@ -594,7 +589,8 @@ namespace dawn_native {
                                                    uint32_t width,
                                                    uint32_t height,
                                                    uint32_t depth,
-                                                   uint32_t level) {
+                                                   uint32_t level,
+                                                   uint32_t slice) {
         if (rowPitch == 0) {
             rowPitch = ComputeDefaultRowPitch(texture, width);
         }
@@ -611,6 +607,7 @@ namespace dawn_native {
         copy->destination.height = height;
         copy->destination.depth = depth;
         copy->destination.level = level;
+        copy->destination.slice = slice;
         copy->rowPitch = rowPitch;
     }
 
@@ -622,6 +619,7 @@ namespace dawn_native {
                                                    uint32_t height,
                                                    uint32_t depth,
                                                    uint32_t level,
+                                                   uint32_t slice,
                                                    BufferBase* buffer,
                                                    uint32_t bufferOffset,
                                                    uint32_t rowPitch) {
@@ -639,6 +637,7 @@ namespace dawn_native {
         copy->source.height = height;
         copy->source.depth = depth;
         copy->source.level = level;
+        copy->source.slice = slice;
         copy->destination.buffer = buffer;
         copy->destination.offset = bufferOffset;
         copy->rowPitch = rowPitch;
