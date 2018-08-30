@@ -90,18 +90,18 @@ class CopyTests_T2B : public CopyTests {
             uint32_t texelsPerRow = rowPitch / kBytesPerTexel;
             uint32_t texelCountPerLayer = texelsPerRow * (height - 1) + width;
 
-            // Create an upload buffer and use it to populate all slices of the `level` mip of the texture
+            dawn::CommandBufferBuilder cmdBuilder = device.CreateCommandBufferBuilder();
+
             std::vector<std::vector<RGBA8>> textureArrayData(textureSpec.arrayLayer);
-            std::vector<dawn::CommandBuffer> commands(textureSpec.arrayLayer * 2);
             for (uint32_t slice = 0; slice < textureSpec.arrayLayer; ++slice) {
                 textureArrayData[slice].resize(texelCountPerLayer);
                 FillTextureData(width, height, rowPitch / kBytesPerTexel, textureArrayData[slice].data(), slice);
+
+                // Create an upload buffer and use it to populate the current slice of the texture in `level` mip level
                 dawn::Buffer uploadBuffer = utils::CreateBufferFromData(device, textureArrayData[slice].data(),
                     static_cast<uint32_t>(sizeof(RGBA8) * textureArrayData[slice].size()), dawn::BufferUsageBit::TransferSrc);
 
-                commands[slice] = device.CreateCommandBufferBuilder()
-                    .CopyBufferToTexture(uploadBuffer, 0, rowPitch, texture, 0, 0, 0, width, height, 1, textureSpec.level, slice)
-                    .GetResult();
+                cmdBuilder.CopyBufferToTexture(uploadBuffer, 0, rowPitch, texture, 0, 0, 0, width, height, 1, textureSpec.level, slice);
             }
 
             // Create a buffer of size `size * textureSpec.arrayLayer` and populate it with empty data (0,0,0,0)
@@ -117,13 +117,12 @@ class CopyTests_T2B : public CopyTests {
             uint32_t bufferOffset = bufferSpec.offset;
             for (uint32_t slice = 0; slice < textureSpec.arrayLayer; ++slice) {
                 // Copy the region [(`x`, `y`), (`x + copyWidth, `y + copyWidth`)] from the `level` mip into the buffer at `offset + bufferSpec.size * slice` and `rowPitch`
-                commands[textureSpec.arrayLayer + slice] = device.CreateCommandBufferBuilder()
-                    .CopyTextureToBuffer(texture, textureSpec.x, textureSpec.y, 0, textureSpec.copyWidth, textureSpec.copyHeight, 1, textureSpec.level, slice, buffer, bufferOffset, bufferSpec.rowPitch)
-                    .GetResult();
+                cmdBuilder.CopyTextureToBuffer(texture, textureSpec.x, textureSpec.y, 0, textureSpec.copyWidth, textureSpec.copyHeight, 1, textureSpec.level, slice, buffer, bufferOffset, bufferSpec.rowPitch);
                 bufferOffset += bufferSpec.size;
             }
 
-            queue.Submit(static_cast<uint32_t>(commands.size()), commands.data());
+            dawn::CommandBuffer commands = cmdBuilder.GetResult();
+            queue.Submit(1, &commands);
 
             bufferOffset = bufferSpec.offset;
             std::vector<RGBA8> expected(bufferSpec.rowPitch / kBytesPerTexel * (textureSpec.copyHeight - 1) + textureSpec.copyWidth);
@@ -185,7 +184,7 @@ protected:
         descriptor.usage = dawn::TextureUsageBit::TransferDst | dawn::TextureUsageBit::TransferSrc;
         dawn::Texture texture = device.CreateTexture(&descriptor);
 
-        dawn::CommandBuffer commands[2];
+        dawn::CommandBufferBuilder cmdBuilder = device.CreateCommandBufferBuilder();
 
         // Create an upload buffer filled with empty data and use it to populate the `level` mip of the texture
         // Note: Prepopulating the texture with empty data ensures that there is not random data in the expectation
@@ -200,17 +199,14 @@ protected:
             std::vector<RGBA8> emptyData(texelCount);
             dawn::Buffer uploadBuffer = utils::CreateBufferFromData(device, emptyData.data(), static_cast<uint32_t>(sizeof(RGBA8) * emptyData.size()), dawn::BufferUsageBit::TransferSrc);
 
-            commands[0] = device.CreateCommandBufferBuilder()
-                .CopyBufferToTexture(uploadBuffer, 0, rowPitch, texture, 0, 0, 0, width, height, 1, textureSpec.level, 0)
-                .GetResult();
+            cmdBuilder.CopyBufferToTexture(uploadBuffer, 0, rowPitch, texture, 0, 0, 0, width, height, 1, textureSpec.level, 0);
         }
 
         // Copy to the region [(`x`, `y`), (`x + copyWidth, `y + copyWidth`)] at the `level` mip from the buffer at the specified `offset` and `rowPitch`
-        commands[1] = device.CreateCommandBufferBuilder()
-            .CopyBufferToTexture(buffer, bufferSpec.offset, bufferSpec.rowPitch, texture, textureSpec.x, textureSpec.y, 0, textureSpec.copyWidth, textureSpec.copyHeight, 1, textureSpec.level, 0)
-            .GetResult();
+        cmdBuilder.CopyBufferToTexture(buffer, bufferSpec.offset, bufferSpec.rowPitch, texture, textureSpec.x, textureSpec.y, 0, textureSpec.copyWidth, textureSpec.copyHeight, 1, textureSpec.level, 0);
 
-        queue.Submit(2, commands);
+        dawn::CommandBuffer commands = cmdBuilder.GetResult();
+        queue.Submit(1, &commands);
 
         // Pack the data used to create the buffer in the specified copy region to have the same format as the expected texture data.
         uint32_t rowPitch = Align(kBytesPerTexel * textureSpec.copyWidth, kTextureRowPitchAlignment);
