@@ -1,3 +1,5 @@
+# This repository is archived, upstream development is on [dawn.googlesource.com](dawn.googlesource.com)
+
 # Dawn, a WebGPU implementation
 
 Dawn (formerly NXT) is an open-source and cross-platform implementation of the work-in-progress WebGPU standard.
